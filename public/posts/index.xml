@@ -1,0 +1,1330 @@
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+    <channel>
+        <title>Posts on who.ldelossa.is</title>
+        <link>http://example.org/posts/</link>
+        <description>Recent content in Posts on who.ldelossa.is</description>
+        <generator>Hugo -- gohugo.io</generator>
+        <language>en-us</language>
+        <copyright>&lt;a href=&#34;https://creativecommons.org/licenses/by-nc/4.0/&#34; target=&#34;_blank&#34; rel=&#34;noopener&#34;&gt;CC BY-NC 4.0&lt;/a&gt;</copyright>
+        <lastBuildDate>Fri, 02 Apr 2021 00:00:00 +0000</lastBuildDate>
+        <atom:link href="http://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+        
+        <item>
+            <title>From Zero To BPF Hero.</title>
+            <link>http://example.org/posts/bpf-zero-to-hero/</link>
+            <pubDate>Fri, 02 Apr 2021 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/bpf-zero-to-hero/</guid>
+            <description>Learn how to run BPF programs with libbpf.</description>
+            <content type="html"><![CDATA[<p>BPF development in the Linux kernel is occurring at a
+rapid pace.
+This makes finding up-to-date documentation and instructional
+material difficult.</p>
+<p>Even today, the examples in the book &ldquo;Linux Observability with BPF&rdquo; is a bit
+out of date (but still very useful).</p>
+<p>Since learning new Linux features always involves chasing
+a moving target, I want to take a &ldquo;teach a person to fish&rdquo;
+approach.</p>
+<p>I&rsquo;ll share with you how I worked backwards from libbpf and
+examples to get a working BPF program as of Linux 5.11.10
+kernel.</p>
+<h2 id="setting-up-your-environment">Setting Up Your Environment</h2>
+<p>Personally, I do my kernel hacking on a virtual
+machine.</p>
+<p>KVM is my hypervisor of choice for obvious reasons.</p>
+<p>I found installing a fresh stable kernel avoids many headaches.
+Doing this will ensure all the headers and other tools we need are installed or buildable.</p>
+<p>Let&rsquo;s run through a quick kernel install.</p>
+<p>Grab the latest stable kernel from <a href="http://www.kernel.org">www.kernel.org</a> (5.11.10 as of this post).
+Both a tar-ball of the source or a <code>git clone</code> of the stable branch will work.</p>
+<p>Once its on your machine of choice build and install it.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make oldconfig 
+$ make 
+$ make install_modules
+$ make install
+$ make headers_install
+</code></pre></div><p>If this is the first time you&rsquo;re building and installing a fresh kernel
+expect it to fail, as you do not have the required dependencies.</p>
+<p>You can google away most of these issues if you&rsquo;re on Ubuntu or Fedora.
+As a tip, jot down what dependencies you need to apt or dnf install for next time.</p>
+<p>Once the final <code>make headers_install</code> command runs without
+issues you&rsquo;ll want to reboot and then run <code>uname -r</code> to confirm
+you&rsquo;re on the vanilla stable kernel (it should simply return 5.11.10).</p>
+<p>A fresh kernel install ensure all headers we need to build the
+latest and greatest BPF programs are installed.</p>
+<h2 id="libbpf">Libbpf</h2>
+<p>The latest way of working with BPF programs is libbpf.</p>
+<p>This library is located at <code>/tools/lib/bpf</code>. This is a library
+that has replaced other tools such as BCC.</p>
+<p>Build and install this library by changing directories to it
+and running:</p>
+<pre><code>$ make
+$ make install
+</code></pre><p>As a spot check, confirm <code>pkg-config</code> can locate this library:</p>
+<pre><code>$ pkg-config --exists libbpf
+$ $?
+$ 0
+</code></pre><p>Our linker will be able to find the BPF headers fine now.</p>
+<h2 id="hello-world">Hello World</h2>
+<p>The following BPF program is stolen from the book
+&ldquo;Linux Observability with BPF&rdquo; book, but modified it to work with the
+latest libbpf and related header files.
+I don&rsquo;t take any credit for this.</p>
+<p>Lets use this &ldquo;hello world&rdquo; program to demonstrate how to
+build and run a BPF program with libbpf.</p>
+<p>Copy this code into a hello_world.c file:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
+<span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
+<span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+
+<span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
+</code></pre></div><p>You&rsquo;ll notice we pull in the &ldquo;bpf/bpf_helpers.h&rdquo; file to
+obtain the &ldquo;SEC&rdquo; macro and the &ldquo;bpf_trace_printk&rdquo; function.</p>
+<p>&ldquo;SEC&rdquo; writes some information into an ELF section, which
+the kernel will use to understand where this BPF program
+attaches.</p>
+<p>In our case, we are attaching it the execve system
+call tracepoint.</p>
+<p>Everytime execve is called our BPF program
+will run.</p>
+<p>Go and try to build this program, it will fail, on purpose
+to demonstrated another step we need to accomplish.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ clang -O1 -target bpf -c hello_world.c -o hello_world.o
+</code></pre></div><p>You&rsquo;ll see a lot of errors about undefined types.</p>
+<p>The issue is, the header <code>&lt;bpf/bpf_helpers.h&gt;</code> uses
+types defined by the kernel.</p>
+<p>We need a way to forward declare these types.</p>
+<p>Time to meet a new friend &ldquo;bpftool&rdquo;.</p>
+<h2 id="bpftool">bpftool</h2>
+<p>Inside the kernel source a tool exists at <code>tools/bpf/bpftool</code>
+This tool has a magic power, it can export a header file
+with <strong>all</strong> the types used within the kernel.</p>
+<p>When we installed our kernel with BPF support a special
+file was exposed in the sys virtual directory.</p>
+<p>This file can be parsed to generate the required header
+file mentioned above.</p>
+<p>To build the tool &lsquo;cd&rsquo; into the source directory and
+do a quick:</p>
+<pre><code>$ make 
+$ make install
+</code></pre><p>This should install the tool to <code>/usr/local/sbin/bpftool</code> by
+default.</p>
+<p>You can generate the header file, cononically named &ldquo;vmlinux.h&rdquo;
+by issuing the following command:</p>
+<pre><code>bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
+</code></pre><p>We can now link this header into our hello_world.c program.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;../vmlinux.h&#34; /* all kernel types */</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
+<span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
+<span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+
+<span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
+</code></pre></div><p>Attempting to compile this program again should work.</p>
+<h2 id="a-bpf-loader">A BPF loader</h2>
+<p>Getting a BPF program to run with libbpf takes a few steps.</p>
+<p>I&rsquo;ll demonstrate with code you can copy into a &ldquo;loader.c&rdquo; file.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/libbpf.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;fcntl.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdint.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[]) {
+<span style="color:#66d9ef">struct</span> bpf_object <span style="color:#f92672">*</span>obj <span style="color:#f92672">=</span> bpf_object__open(<span style="color:#e6db74">&#34;./hello_world.o&#34;</span>);
+<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>obj) {
+  printf(<span style="color:#e6db74">&#34;failed to open bpf object file, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
+  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+}
+printf(<span style="color:#e6db74">&#34;created bpf object, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
+
+<span style="color:#66d9ef">if</span> (bpf_object__load(obj)) {
+  printf(<span style="color:#e6db74">&#34;failed to load bpf object into kernel.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+}
+printf(<span style="color:#e6db74">&#34;loaded bpf object into kernel</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+
+<span style="color:#66d9ef">struct</span> bpf_program <span style="color:#f92672">*</span>prog <span style="color:#f92672">=</span> bpf_program__next(NULL, obj);
+<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>prog) {
+  printf(<span style="color:#e6db74">&#34;failed to query for bpf program in loaded object</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+}
+printf(<span style="color:#e6db74">&#34;extracted bpf program name: %s section name: %s</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+       bpf_program__name(prog), bpf_program__section_name(prog));
+
+<span style="color:#66d9ef">struct</span> bpf_link <span style="color:#f92672">*</span>link <span style="color:#f92672">=</span> bpf_program__attach(prog);
+<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>link) {
+  printf(<span style="color:#e6db74">&#34;failed to attach bpf program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+}
+printf(<span style="color:#e6db74">&#34;bpf program is now running&#34;</span>);
+
+getchar();
+<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+}
+</code></pre></div><p>As you can see the phases are:</p>
+<ul>
+<li>open: parses the elf object file extracting BPF programs (funcions with a SEC() macro declared above it).</li>
+<li>load: runs each BPF program against the verifier and if it passes loads it into the kernel.</li>
+<li>attach: attaches a specific BPF program to the target specified by the SEC macro.</li>
+</ul>
+<h2 id="a-skeleton-loader">A skeleton loader</h2>
+<p>Above is how to run a program with no boiler-plate code.</p>
+<p>There&rsquo;s an easier way if you don&rsquo;t mind some magic.</p>
+<p>The bpftool can generate a skeleton header which can be linked
+into another loader program that takes care of the nitty-gritty we
+demonstrated above.</p>
+<p>Run the following command targeting our hello_world.o object file.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">bpftool gen skeleton hello_world.o &gt; hello_world.skel.h
+</code></pre></div><p>You can explore this file yourself, but here is an example
+of using the skeleton to reduce the boilerplate above.</p>
+<p>Copy this code into &ldquo;skeleton_loader.c&rdquo;.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;hello_world.skel.h&#34;</span><span style="color:#75715e">
+</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">**</span>argv) {
+<span style="color:#66d9ef">struct</span> hello_world <span style="color:#f92672">*</span>hw <span style="color:#f92672">=</span> hello_world__open_and_load();
+printf(<span style="color:#e6db74">&#34;created hello_world skeleton program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+
+<span style="color:#66d9ef">int</span> attached <span style="color:#f92672">=</span> hello_world__attach(hw);
+<span style="color:#66d9ef">if</span> (attached) {
+  printf(<span style="color:#e6db74">&#34;failed to attach hello world program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+}
+printf(<span style="color:#e6db74">&#34;hello world program running&#34;</span>);
+getchar();
+}
+</code></pre></div><p>Nice and simple.</p>
+<h2 id="wrapping-it-up">Wrapping it up</h2>
+<p>It goes without saying, we are only scratching the surface of BPF.</p>
+<p>In subsequent posts I&rsquo;ll be covering mount points, BPF maps, and exposing data
+from BPF programs.</p>
+<h3 id="sources">Sources</h3>
+<p>[1] <a href="https://facebookmicrosites.github.io/bpf/blog/2020/02/20/bcc-to-libbpf-howto-guide.html">https://facebookmicrosites.github.io/bpf/blog/2020/02/20/bcc-to-libbpf-howto-guide.html</a></p>
+<p>[2] <a href="https://docs.cilium.io/en/stable/bpf/">https://docs.cilium.io/en/stable/bpf/</a></p>
+<p>[3] Calavera, D., &amp; Fontana, L. (2019). Linux Observability with BPF: Advanced Programming for Performance Analysis and Networking (1st ed.). O’Reilly Media.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</title>
+            <link>http://example.org/posts/absolute-minimum-cryptography/</link>
+            <pubDate>Tue, 22 Sep 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/absolute-minimum-cryptography/</guid>
+            <description>What every developer should know about crytography to make their lifes easier.</description>
+            <content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+<p>It&rsquo;s common to hear engineers muttering &ldquo;cryptography is scary&rdquo; or &ldquo;oh no its a cert problem.&rdquo;</p>
+<p>The topic is a dense one full of maths, mailing lists, and vulnerabilities which quite literally shock the world.
+It&rsquo;s understandable how a lot of engineers put learning about the topics to another day.</p>
+<p>In my career I have been asked to build two different certificate signing backends for IoT purposes.
+These tasks provided the opportunity to work with authentication, encryption, and cryptography at a lower level then typical.</p>
+<p>This post will outline the bare minimum engineers should understand before working with authentication and encryption systems.</p>
+<h2 id="part-1-conceptual-overview">Part 1: Conceptual Overview</h2>
+<p>This section will provide a gentle introduction to authentication and encryption.
+These topics are to be read as a conceptual overview and not as literal implementation details.</p>
+<h3 id="authentication-and-encryption">Authentication and Encryption</h3>
+<p>Cryptography can lend itself to many utilities but as software developers our usage centers around authentication and encryption.</p>
+<p>Authentication is the act of identification.
+Cryptography can guarantee authentication and thus provide trust that the subject you are communicating with is indeed who they say they are.
+Authentication is implemented by cryptographic signing.</p>
+<p>Encryption is the act of concealing communications from unintended audiences.
+When a communication is encrypted it is guaranteed to be viewable only by the intended party.</p>
+<p>Authentication and encryption are used together to device a notion of trust in our applications and on the internet.</p>
+<h3 id="cryptographic-signing">Cryptographic Signing</h3>
+<p>Cryptographically signing a message proves authentication in a single direction. It works like so:</p>
+<ul>
+<li>Sender: constructs a message to be sent.</li>
+<li>Sender: constructs a key to sign the message with.</li>
+<li>Sender: uses a signing algorithm to sign the bits of the message with the constructed keys.</li>
+<li>Sender: sends message along with signature to client.</li>
+<li>Receiver: receives the message and signature.</li>
+<li>Receiver: retrieves the sender&rsquo;s key.</li>
+<li>Receiver: uses the sender&rsquo;s key to sign the received message.</li>
+<li>Receiver: compares the sender&rsquo;s signature with the one computed by the receiver itself.</li>
+</ul>
+<p>If the receiver sees both signatures as equal and knows it can trust the key used to create the signature, the receiver can trust the message is from the sender.</p>
+<p>The various ways to securely transfer the sender&rsquo;s key to the receiver will be covered a bit later in the post.</p>
+<p>Typical signing algorithms are:</p>
+<ul>
+<li>HS256 - HMAC with SHA256</li>
+<li>RSA256 - RSA Signature with SHA256</li>
+</ul>
+<h3 id="cryptographic-encryption">Cryptographic Encryption</h3>
+<p>While similar in procedure, cryptographic encryption serves a separate purpose. It works like so:</p>
+<ul>
+<li>Sender: constructs a key</li>
+<li>Sender: construct a message to send</li>
+<li>Sender: run the message bits and the key through an encryption algorithm, producing unintelligible ciphertext.</li>
+<li>Sender: sends cipher text message to receiver.</li>
+<li>Receiver: receives the message</li>
+<li>Receiver: retrieves the sender&rsquo;s key</li>
+<li>Receiver: runs the message&rsquo;s ciphertext and the retrieved key through the same encryption algorithm, producing an intelligible message.</li>
+</ul>
+<p>In the above scenario the key is being utilized on every message to encrypt the message and conceal its contents.</p>
+<p>Typical encryption algorithms are:</p>
+<ul>
+<li>DES &amp; 3DES</li>
+<li>RSA</li>
+<li>Blowfish</li>
+<li>AES</li>
+</ul>
+<h2 id="part-2-applied-technologies">Part 2: Applied Technologies</h2>
+<p>Several widely used technologies apply signing and encryption in practice. We will cover the following:</p>
+<ul>
+<li>Private Key Infrastructure And x509 Certificates</li>
+<li>TLS (SSL)</li>
+<li>JSON Web Tokens / JSON Web Signatures</li>
+</ul>
+<h3 id="private-key-infrastructure-and-x509-certificates">Private Key Infrastructure And x509 Certificates</h3>
+<p>Private key infrastructure, or PKI for short, is a grouping of technologies, protocols, and policies.
+This grouping can be used in tandem to ensure both authentication and encryption and securely transfer keys between parties.</p>
+<p>PKI is based on a private/public key model.
+In this model a private key is used for signing or encryption while the public key is used for verification or decryption.</p>
+<p>*aside: Often the terms &ldquo;asymmetric&rdquo; and &ldquo;symmetric&rdquo; encryption come up. When the same key is used to encrypt and decrypt a message, this is known as &ldquo;symmetric&rdquo; encryption. When a key is used to encrypt a message as a different key is used to decrypt the message, this is known as &ldquo;asymmetric&rdquo; encryption. Public/Private key encryption is considered &ldquo;asymmetric&rdquo;.</p>
+<p>The private key is kept secret and used to sign data while the public key can verify what the private key signs.
+The public key can never be used to derive the private key and this is mathematically proven.</p>
+<p><em>aside: PKI infrastructure will typically use RSA public and private keys. We dig into this more later in the post.</em></p>
+<p>In our examples above the sender would sign a message with its private key, make its public key available to the receiver, and the receiver would verify the message utilizing the sender&rsquo;s public key.</p>
+<p>PKI is called an &lsquo;infrastructure&rsquo; because it provides a trust policy in addition to authentication and encryption.</p>
+<p>In PKI the trust policy takes the form of a tree.
+At the root of the tree is the &ldquo;root CA&rdquo;, where CA is short for certificate authority.
+The root can create one or more &ldquo;intermediate CA(s)&rdquo; by creating and signing their certificate with its own private key, providing authenticity that the intermediate CA was created by the root.
+This creates a chain of trust as I can confirm an intermediate is signed by its root by obtaining the root&rsquo;s public key and verifying the certificate&rsquo;s signature.</p>
+<p>The intermediate CA is then kept online while the root CA is kept offline.
+This is for security purposes, if the intermediate CA private keys are compromised they can be revoked and the collateral damage can be managed.
+If the root CA&rsquo;s key is compromised all certificates created by any CA in the tree must be revoked.</p>
+<p>A diagram can help provide a visual aide.</p>
+<p><img src="/pki_hierarchy_diagram.png" alt="pki hierarchy diagram"></p>
+<p>Each node in the chain has both a private key and a certificate.</p>
+<p>PKI utilizes a standardized certificate model specified in <a href="https://tools.ietf.org/html/rfc2459">rfc-2459</a>.</p>
+<p>A certificate is an envelope containing metadata and the public key of the owner. It may be used as follows:</p>
+<ul>
+<li>Sender: Signs a message with it&rsquo;s private key.</li>
+<li>Sender: Sends message to receiver.</li>
+<li>Receiver: Receives message.</li>
+<li>Receiver: Obtains the sender&rsquo;s certificate.</li>
+<li>Receiver: Verifies the certificate&rsquo;s authenticity by following the certificate trust chain.</li>
+<li>Receiver: Extracts public key from certificate and verifies message.</li>
+</ul>
+<p>Note that it is not enough to simply extract the public key and verify the message.
+The receiver must verify the encountered certificate was indeed signed by the issuer&rsquo;s private key.
+This is typically performed by the receiver having a local copy of popular root and intermediate certificates, extracting the public key from the one matching the issuer of the encountered certificate, and verifying the signature.</p>
+<p>It is worthwhile to take a pragmatic look at setting up a root CA, intermediate, and signing client certificates.
+A wonderful tutorial can be found <a href="https://jamielinux.com/docs/openssl-certificate-authority/">here</a></p>
+<h3 id="tls">TLS</h3>
+<p>TLS utilizes PKI to implement encryption over HTTP also known as &ldquo;HTTPS&rdquo;.
+TLS guarantees that every bit of data between two HTTP clients is encrypted and unintelligible to any other parties which may route the traffic.</p>
+<p>TLS is a protocol which exchanges asymmetric keys, generates symmetric keys, and uses the symmetric keys to encrypt data between parties.</p>
+<p>When a browser connects to an HTTPS website a handshake occurs.
+Within this handshake the server&rsquo;s certificate is verified and a set of symmetric keys are crafted.
+All communication on this secure channel is now encrypted and decrypted with the symmetric keys.</p>
+<p>The reason symmetric keys are used is for performance.
+Encrypting and decrypting with a private/public key can be expensive due to key size.
+Encryption and decryption can occur quicker with smaller symmetric keys.</p>
+<p>TLS also provides authentication.</p>
+<p>Each https server is assigned a client certificate.
+From our PKI diagram, client certificates are the leafs.
+When a user requests information from a server, the user&rsquo;s browser will check the server&rsquo;s certificate.
+If the browser cannot prove the certificate was created by a trusted root or intermediate CA the connection will fail.</p>
+<p><em>aside: if you ever had to install a certificate bundle to a server because ssl was failing you are installing a well known set of trusted root and intermediate certificates. This is used in the above verification process.</em></p>
+<p>With TLS comes maintenance.
+TLS certificates expire over time and must be kept up to date.
+Traditionally a server TLS certificate would be purchased from a well known root CA such as DigiTrust.
+Today, &ldquo;let&rsquo;s encrypt&rdquo; has paved the way for free certificates, albeit these certs expire much sooner then ones you can purchase from a trusted root ca.</p>
+<h3 id="json-web-tokens-and-json-web-encryption">JSON Web Tokens and JSON Web Encryption</h3>
+<p>JSON Web Tokens or JWT for short has become a popular form of authentication in modern web applications.
+When coupled with JSON Web Encryption both authentication and encryption can be utilized.</p>
+<p>The ubiquity of JWT and JSE is due to it&rsquo;s simplicity and ease of use.
+Both specifications use JSON to transfer a signed and optionally encrypted token between parties.</p>
+<p>This token can optionally contain claims, key/value information potentially useful for the receiving party along with several other &ldquo;sections&rdquo; which are base64 encoded and signed.
+The full details of generating a token can be viewed <a href="https://jwt.io/introduction/">here</a>.</p>
+<p>The flow of jwt interaction follows:</p>
+<ul>
+<li>Sender: generates the header and the payload for the JWT.</li>
+<li>Sender: generate the signature for the JWT utilizing a key.</li>
+<li>Sender: places the token in an &ldquo;authorization&rdquo; http header.</li>
+<li>Receiver: parses the &ldquo;authorization&rdquo; header and retrieves the token.</li>
+<li>Receiver: retrieves the sender&rsquo;s key.</li>
+<li>Receiver: verifies the signature portion with the sender&rsquo;s key.</li>
+</ul>
+<p>JWT alone provides no key transfer facilities and the token&rsquo;s data is in plain text.
+However, with JSON Web Encryption (JWE) it becomes possible to piggyback off PKI and retrieve public keys via the public key infrastructure.</p>
+<p>More than a high level overview is further then this post would like to go.
+If you are interested in further details on JWT and JWE I suggest checking out the <a href="https://tools.ietf.org/html/rfc7519">JWT RFC</a> and <a href="https://tools.ietf.org/html/rfc7516">JWE RFC</a> directly.</p>
+<p>Understanding this post will lend itself to utilizing JWT and JWE without much difficulty, as their components build on the fundamentals.</p>
+<h2 id="part-2-encodings">Part 2: Encodings</h2>
+<p>The following topics will describe the ubiquitous encoding formats encountered in modern authentication and encryption applications.</p>
+<h3 id="it-all-starts-with-asn1">It All Starts With ASN.1</h3>
+<p>ASN.1 is a language for <strong>describing</strong> encodings.</p>
+<p>A user of ASN.1 can write out ASN.1 data types.</p>
+<p>A consumer of ASN.1 definitions program how these objects will serialize to disk or a network wire.
+This is referred to as an &ldquo;encoding&rdquo; of ASN.1 types.</p>
+<p>For example an ASN.1 definition may describe a data structure comprised of two integer fields, an array of integers field, and a string field in a similar fashion as a structure in Go.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Obj</span> <span style="color:#66d9ef">struct</span> {
+<span style="color:#a6e22e">X</span> <span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">Y</span> <span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">Values</span> []<span style="color:#66d9ef">int</span>
+<span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
+}
+</code></pre></div><p>Just as we can take any Go struct with public members and encode it into JSON, ASN.1 provides a common language to define structures and encode it into several forms.</p>
+<p>ASN.1 is heavily used in the telecommunication industry and remains popular due to its extensibility.</p>
+<h4 id="der">DER</h4>
+<p>DER specifies a set of rules for encoding ASN.1 objects into binary.</p>
+<p>Any objects described in ASN.1 can be encoded into DER and serialized as binary.</p>
+<p>Libraries will often return DER encoded keys and certificates when crafting cryptographic primitives.
+It can be convenient for applications to work with DER as any penalty for marshalling/unmarshalling the binary to ASCII is not present.</p>
+<h4 id="pem">PEM</h4>
+<p>PEM is simply the base64 encoded DER data surrounded by a block of ASCII text.
+Since DER can encode several ASN.1 formats and PEM simply holds a base64 representation of this data, PEM can hold multiple ASN.1 described formats transitively.</p>
+<p>PEM is the encoding public keys, private keys, and certificates are typically transported in, as they are human readable and can be instantly recognized.</p>
+<p>A PEM private key follows:</p>
+<pre><code>-----BEGIN RSA PRIVATE KEY-----
+MIIEpQIBAAKCAQEA3Tz2mr7SZiAMfQyuvBjM9Oi..Z1BjP5CE/Wm/Rr500P
+RK+Lh9x5eJPo5CAZ3/ANBE0sTK0ZsDGMak2m1g7..3VHqIxFTz0Ta1d+NAj
+wnLe4nOb7/eEJbDPkk05ShhBrJGBKKxb8n104o/..PdzbFMIyNjJzBM2o5y
+5A13wiLitEO7nco2WfyYkQzaxCw0AwzlkVHiIyC..71pSzkv6sv+4IDMbT/
+XpCo8L6wTarzrywnQsh+etLD6FtTjYbbrvZ8RQM..Hg2qxraAV++HNBYmNW
+s0duEdjUbJK+ZarypXI9TtnS4o1Ckj7POfljiQI..IBAFyidxtqRQyv5KrD
+kbJ+q+rsJxQlaipn2M4lGuQJEfIxELFDyd3XpxP..Un/82NZNXlPmRIopXs
+2T91jiLZEUKQw+n73j26adTbteuEaPGSrTZxBLR..yssO0wWomUyILqVeti
+6AkL0NJAuKcucHGqWVgUIa4g1haE0ilcm6dWUDo..fd+PpzdCJf1s4NdUWK
+YV2GJcutGQb+jqT5DTUqAgST7N8M28rwjK6nVMI..BUpP0xpPnuYDyPOw6x
+4hBt8DZQYyduzIXBXRBKNiNdv8fum68/5klHxp6..4HRkMUL958UVeljUsT
+BFQlO9UCgYEA/VqzXVzlz8K36VSTMPEhB5zBATV..PRiXtYK1YpYV4/jSUj
+vvT4hP8uoYNC+BlEMi98LtnxZIh0V4rqHDsScAq..VyeSLH0loKMZgpwFEm
+bEIDnEOD0nKrfT/9K9sPYgvB43wsLEtUujaYw3W..Liy0WKmB8CgYEA34xn
+1QlOOhHBn9Z8qYjoDYhvcj+a89tD9eMPhesfQFw..rsfGcXIonFmWdVygbe
+6Doihc+GIYIq/QP4jgMksE1ADvczJSke92ZfE2i..fitBpQERNJO0BlabfP
+ALs5NssKNmLkWS2U2BHCbv4DzDXwiQB37KPOL1c..kBHfF2/htIs20d1UVL
++PK+aXKwguI6bxLGZ3of0UH+mGsSl0mkp7kYZCm..OTQtfeRqP8rDSC7DgA
+kHc5ajYqh04AzNFaxjRo+M3IGICUaOdKnXd0Fda..QwfoaX4QlRTgLqb7AN
+ZTzM9WbmnYoXrx17kZlT3lsCgYEAm757XI3WJVj..WoLj1+v48WyoxZpcai
+uv9bT4Cj+lXRS+gdKHK+SH7J3x2CRHVS+WH/SVC..DxuybvebDoT0TkKiCj
+BWQaGzCaJqZa+POHK0klvS+9ln0/6k539p95tfX..X4TCzbVG6+gJiX0ysz
+Yfehn5MCgYEAkMiKuWHCsVyCab3RUf6XA9gd3qY..fCTIGtS1tR5PgFIV+G
+engiVoWc/hkj8SBHZz1n1xLN7KDf8ySU06MDggB..hJ+gXJKy+gf3mF5Kmj
+DtkpjGHQzPF6vOe907y5NQLvVFGXUq/FIJZxB8k..fJdHEm2M4=
+-----END RSA PRIVATE KEY-----
+</code></pre><p>Because the base64 value can be several ASN.1 descriptions the PEM encoding wraps the base64 data with some header information.
+This is helpful for libraries which parse and decode these files.</p>
+<h4 id="pkcs8-and-pkix">PKCS8 and PKIX</h4>
+<p>PKCS8 and PKIX are formats specifically utilized for encoding a private key and a public key respectively.
+The former is part of a larger set of <a href="https://en.wikipedia.org/wiki/PKCS">PKCS protocols</a> defined by the RSA organization.
+The latter is defined by the Public Key Infrastructure working in <a href="https://tools.ietf.org/html/rfc5280#section-4.1">rfc-5280 section4.1</a>:</p>
+<pre><code>SubjectPublicKeyInfo  ::=  SEQUENCE  {
+   algorithm            AlgorithmIdentifier,
+   subjectPublicKey     BIT STRING  }
+</code></pre><p>Both these formats are expressed in ASN.1 notation, therefore they can be DER encoded and subsequently PEM encoded.</p>
+<p>These formats support password protection utilizing symmetric keys where both DER and PEM do not.</p>
+<h3 id="rsa-keys-and-certificates">RSA Keys And Certificates</h3>
+<p>RSA keys are often used with x.509 certificates. As a reminder certificates are used to prove authenticity.</p>
+<p>The certificate has a public key and enough information to prove this key is from who the receiver thinks it is.</p>
+<p>A certificate is yet another ASN.1 described object defined in the <a href="https://tools.ietf.org/html/rfc5280">rfc-5280</a> and can be marshalled to DER and PEM just like the others.</p>
+<h2 id="part-3-an-example">Part 3: An example</h2>
+<p>Generate a RSA Key Pair.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">f</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">os</span>.<span style="color:#a6e22e">Open</span>(<span style="color:#e6db74">&#34;/dev/random&#34;</span>)
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+  <span style="color:#a6e22e">log</span>.<span style="color:#a6e22e">Fatal</span>(<span style="color:#a6e22e">err</span>)
+}
+<span style="color:#a6e22e">private</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rsa</span>.<span style="color:#a6e22e">GenerateKey</span>(<span style="color:#a6e22e">f</span>, <span style="color:#ae81ff">4096</span>)
+</code></pre></div><p>The above uses &ldquo;/dev/random&rdquo; as a random seed source and creates a 4096 bit key pair.</p>
+<p>The public key can be extracted from the private.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">public</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">private</span>.<span style="color:#a6e22e">Public</span>()
+</code></pre></div><p>Both <code>private</code> and <code>public</code> variables hold a language specific key object with fields specific to the RSA algorithm.</p>
+<p>We want to transport the public key, both PKCS1 and PKIX are formats that can accomplish this. Since we covered PKIX in this post lets use that format.</p>
+<pre><code>der, err := x509.MarshalPKIXPublicKey(public)
+</code></pre><p>This marshal function will take the language specific public key object, marshall it into the ASN.1 PKIX description, and then encode this ASN.1 description into binary.
+The <code>der</code> variable holds a byte slice containing the DER encoding of the private key.</p>
+<p>If the goal is to simply store a public key in a database the binary DER encoding fulfills this use case.
+However, if the key must transit a transport that is not byte safe such as a network or email system we must PEM encoded the byte slice.</p>
+<p>In order to PEM encode our DER encoded PKIX public key we need to create a PEM block.</p>
+<pre><code>type Block struct {
+  Type    string            // The type, taken from the preamble (i.e. &quot;RSA PRIVATE KEY&quot;).
+  Headers map[string]string // Optional headers.
+  Bytes   []byte            // The decoded bytes of the contents. Typically a DER encoded ASN.1 structure.
+}
+</code></pre><p>The structure defines a few fields.</p>
+<p><code>Type</code> is ASCII text which defines the binary data being encoded.
+For a PKIX public key this should be &ldquo;PUBLIC KEY&rdquo;.</p>
+<p>Headers allow for further details about the binary we are encoding, we will not use this.</p>
+<p>Finally the <code>Bytes</code> field contains the binary data we are going to base64 encode into ASCII.
+Remember a PEM is simply the base64 encoded binary data with some ASCII type and header information heading and footing the results.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">block</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pem</span>.<span style="color:#a6e22e">Block</span>{
+  <span style="color:#a6e22e">Type</span>:  <span style="color:#e6db74">&#34;PUBLIC KEY&#34;</span>,
+  <span style="color:#a6e22e">Bytes</span>: <span style="color:#a6e22e">der</span>,
+}
+<span style="color:#a6e22e">pem</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">pem</span>.<span style="color:#a6e22e">EncodeToMemory</span>(<span style="color:#a6e22e">block</span>)
+</code></pre></div><p>The above defines the block and encodes our binary PKIX key into an ASCII PEM format.</p>
+<p>At this point we can print the pem encoded key and see a familiar sight.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Print</span>(string(<span style="color:#a6e22e">pem</span>))
+</code></pre></div><pre><code>-----BEGIN PUBLIC KEY-----
+MIICCgKCAgEAsWQmmNw+gBRR2vq59w2LyUtJ/E3kKiatjGYmpTuSlrzbIiXNL3qz
+xWGUhgux6UYJlEReT6eCwIfVJvVGJVRl/cL5ji3FCg+PAUqkn9BIFODx1MHWyWDe
+4/nQpfNpW7NjPW90M2yYR3YVKscyupidpJS3o99Iay3KmYn1xJ6HBaFTx3WXo9xG
+vqDY8uVGzcawUiTe3S2FUaKwi5SWU2bb98gzrQ1vTLej01Wh8mH6w+rrnZy5l+nz
+grRqVbVwP7Q2LbcrbJGj8P3RT+3RafuP4S0Xf9X6IbNsAFYLFDarMwlB9cnVda3v
+CgHuGPqwBWU9KaXT1XRhdnvqX7dBi48GFOKyiD0jULY50sxLbGHCoWno0OUHFuZ4
+36kRAtTJOVTMt0yuUT9rfIfthdo8sCcQxamTmE3AFZs1/aKu8/wKJn6XfXSQjBPD
+hHXi1k9v1pMIjqUPWIo6JVtuuctX6ypTq3Q8PbJ4XCybIDemA7juKG3idyruUXS+
+09cCQkQ6sylVDHwmaskowcC5H5G87xdrXl8NyAkh+oq3hVBSG0lCQeDWVvsua8L5
+gxHQwz9xDtXKDXkZk7ovyVGISAKBpW7o4VBnE3zkpOQGluH/QfUWjX/fiD6cazz6
+msBtiBSSjM6yL+CosTSarhgd1qB0y3/ZgwDTRL+Ax2vvmiz06mfSjsUCAwEAAQ==
+-----END PUBLIC KEY-----
+</code></pre><h2 id="conclusion">Conclusion</h2>
+<p>A novice&rsquo;s view of cryptography is clouded by unfamiliar terminology and acronyms.
+This often leads to engineers avoiding the subject all together.</p>
+<p>This post makes it apparent that working with cryptography in a pragmatic sense has parallels with json or protobuf.
+At the end of the day, we describe a machine agnostic definition of an object (ASN.1), specify a way to encode this description (DER), and optionally modify the binary encoding to be network and email friendly (PEM).</p>
+<p>With this new perspective tasks dealing with certificates, ssl, authentication, and encryption should be demystified enough to tackle.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Optimizing PGX Allocations in Golang with Pprof.</title>
+            <link>http://example.org/posts/allocation_optimization_in_go/</link>
+            <pubDate>Tue, 15 Sep 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/allocation_optimization_in_go/</guid>
+            <description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description>
+            <content type="html"><![CDATA[<p>Performance tuning is one of those programming rituals that gets oddly addicting.
+Seems like humans have a fundamental impulse to make a graph plot in their desired direction.
+This can be seen in a wide assortment of fields.
+Day traders watch metrics focused on their net earnings, nutritionists keep their calorie counts logged, and programmers focusing on performance obsess over memory allocations.</p>
+<p>After spending sometime obessing myself I found myself making large allocation improvements with some tricks in the popular <a href="https://github.com/jackc/pgx">PGX</a> library.</p>
+<p>I&rsquo;d like to shout out <em>Kale Blanekship</em> and <em>Eric Chlebek</em> from the performance channel in #gophers slack. They provided the clues used in this post.</p>
+<h2 id="the-code">The code</h2>
+<p>The code that&rsquo;s being profiled is a new distributed lock implementation for <a href="https://github.com/quay/claircore/">ClairCore</a>.
+Postgres is the only required infrastructure for ClairCore by design.
+While it&rsquo;s not the best mechanim for a distributed lock, <a href="https://www.postgresql.org/docs/9.1/explicit-locking.html">postgres advisory locks</a> can be utilized to get <em>mostly</em> there.</p>
+<p>You can view the distlock implementation <a href="https://github.com/ldelossa/distlock">here</a></p>
+<h2 id="reducing-channel-allocations">Reducing channel allocations</h2>
+<p>Our distlock implementation utilizes the request/response channel-of-channel pattern.
+A request object with a response channel is pushed onto a request channel.
+When the receiver gets the request it writes to the response channel, unblocking any client listening.</p>
+<p>This pattern is useful but will also alloc a lot of channels resulting in bloating the heap.</p>
+<p>To demonstrate this a benchmark will be taken that profiles lock acquisition and lock return.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ go test -benchtime <span style="color:#e6db74">&#34;1m&#34;</span>  -run xxx -bench . -memprofile memprofile.out -cpuprofile cpuprofile.out
+</code></pre></div><p>The command above runs a 1 minute benchmark profiling both memory and cpu.</p>
+<p>Next lets start an interactive pprof session over the memory profile and drill into the function where the channel allocations are occuring.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ go tool pprof distlock.test memprofile.out
+
+<span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
+Total: 194.36MB
+ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
+    20MB       20MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span> 10.29% of Total
+       .          .     78: <span style="color:#f92672">}</span>
+       .          .     79:
+       .          .     80: req :<span style="color:#f92672">=</span> request<span style="color:#f92672">{</span>
+       .          .     81:     t:        Lock,
+       .          .     82:	    key:      key,
+ 13.50MB    13.50MB     83:		respChan: make<span style="color:#f92672">(</span>chan response<span style="color:#f92672">)</span>,
+       .          .     84:	<span style="color:#f92672">}</span>
+       .          .     85:
+       .          .     86:	// guaranteed to <span style="color:#66d9ef">return</span>
+       .          .     87:	resp :<span style="color:#f92672">=</span> m.g.request<span style="color:#f92672">(</span>req<span style="color:#f92672">)</span>
+       .          .     88:
+       .          .     89:	<span style="color:#66d9ef">if</span> !resp.ok <span style="color:#f92672">{</span>
+       .          .     90:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
+       .          .     91:	<span style="color:#f92672">}</span>
+       .          .     92:
+       .          .     93:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
+       .          .     94:
+  6.50MB     6.50MB     95:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+       .          .     96:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
+       .          .     97:	<span style="color:#f92672">}</span>
+       .          .     98:<span style="color:#f92672">}</span>
+       .          .     99:
+       .          .    100:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</code></pre></div><p>Above illustrates 13.50MB of heap memory is spent on allocating request objects and their response channels.</p>
+<p>We can introduce an object pool to promote the reuse of these channels.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">reqPool</span> <span style="color:#66d9ef">struct</span> {
+	<span style="color:#a6e22e">c</span> <span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>
+}
+
+<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewReqPool</span>(<span style="color:#a6e22e">seed</span> <span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span> {
+	<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>, <span style="color:#a6e22e">seed</span><span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
+	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">seed</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+		<span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
+		<span style="color:#66d9ef">select</span> {
+		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
+		<span style="color:#66d9ef">default</span>:
+
+		}
+	}
+	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">reqPool</span>{<span style="color:#a6e22e">c</span>}
+}
+
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Get</span>() <span style="color:#a6e22e">request</span> {
+	<span style="color:#66d9ef">select</span> {
+	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span>:
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>
+	<span style="color:#66d9ef">default</span>:
+		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
+	}
+}
+
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">request</span>) {
+	<span style="color:#66d9ef">select</span> {
+	<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">respChan</span>:
+	<span style="color:#66d9ef">default</span>:
+	}
+	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">key</span> = <span style="color:#e6db74">&#34;&#34;</span>
+	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">t</span> = <span style="color:#a6e22e">Invalid</span>
+	<span style="color:#66d9ef">select</span> {
+	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
+	}
+}
+</code></pre></div><p>The above illustrates a simple channel implemented pool.
+The first implementation was a sync.Pool.
+After further profiling however implementing our own proved to be easier on the heap.</p>
+<p>After plumbing the requst pool into the rest of the code pprof reports a much nicer result.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
+Total: 80.06MB
+ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
+     1MB        1MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span>  1.25% of Total
+       .          .     89:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
+       .          .     90:	<span style="color:#f92672">}</span>
+       .          .     91:
+       .          .     92:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
+       .          .     93:
+     1MB        1MB     94:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+       .          .     95:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
+       .          .     96:	<span style="color:#f92672">}</span>
+       .          .     97:<span style="color:#f92672">}</span>
+       .          .     98:
+       .          .     99:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+
+</code></pre></div><h2 id="a-pgx-trick">A PGX Trick</h2>
+<p>Removing the cost of the response-request model was a good win but there is still more to tune.</p>
+<p>Lets generate a graph of our call stack and associated allocations.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">❯ go tool pprof -svg distlock.test memprofile.out
+</code></pre></div><p><img src="/profile001.png" alt="photo of high PGX allocations"></p>
+<p>The above diagram is showing a large amount of allocations in PGX&rsquo;s getRows method.
+Its not rare for methods dealing with serialization to and from the database to allocate heavily.
+But it would be nice if we could eliminate this.</p>
+<p>Getting a session pg advisory lock typically looks like this.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">SELECT</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
+<span style="color:#66d9ef">SELECT</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
+</code></pre></div><p>Both lock functions return a table expression resulting in a true or a false.</p>
+<p>An optimization we can make is changing these queries to only return a row if the lock function returns true.
+Our application logic can then simply check whether any rows are returned and not read the contents.</p>
+<p>First lets fix our queries.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+<span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</code></pre></div><p>A slight modification allows us to only return rows if the lock function returns true.</p>
+<p>The next step is to short circuit the PGX library from reading the rows.
+This took a bit of library spelunking but I eventually discovered this&hellip;</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">rr</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">PgConn</span>().<span style="color:#a6e22e">ExecParams</span>(<span style="color:#a6e22e">ctx</span>,
+  <span style="color:#a6e22e">trySessionUnlock</span>,
+  [][]<span style="color:#66d9ef">byte</span>{
+      <span style="color:#a6e22e">keyify</span>(<span style="color:#a6e22e">key</span>),
+  },
+  <span style="color:#66d9ef">nil</span>,
+  []<span style="color:#66d9ef">int16</span>{<span style="color:#ae81ff">1</span>},
+  <span style="color:#66d9ef">nil</span>)
+<span style="color:#a6e22e">tag</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rr</span>.<span style="color:#a6e22e">Close</span>()
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>}
+}
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">tag</span>.<span style="color:#a6e22e">RowsAffected</span>() <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;unlock of key %s returned false&#34;</span>, <span style="color:#a6e22e">key</span>)}
+}
+</code></pre></div><p>By using the lower level PgConn object we can exec our queries, get a response writer, and immediately close it to obtain the command tag.
+The command tag tells us if any rows were affected by the exec. This effectively tells us whether the lock was obtained or not in a somewhat indirect way.</p>
+<p>Let&rsquo;s take a new 1 minute memory profile to see how this effects our heap.</p>
+<p><img src="/profile002.png" alt="photo of high PGX allocations"></p>
+<p>Notice the large improvement achieved.</p>
+<p>We can also compare the benchmark output.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#ae81ff">85149</span>            <span style="color:#ae81ff">890605</span> ns/op            <span style="color:#ae81ff">1288</span> B/op         <span style="color:#ae81ff">21</span> allocs/op
+</code></pre></div><p>Where PGX was reading the rows.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#ae81ff">58051</span>           <span style="color:#ae81ff">1238353</span> ns/op             <span style="color:#ae81ff">517</span> B/op         <span style="color:#ae81ff">11</span> allocs/op
+</code></pre></div><p>By eliminating the reading of rows we perform many more cycles and cut our allocation in roughly half.</p>
+<h2 id="disclaimer-on-optimization">Disclaimer on optimization</h2>
+<p>Is it worth to dig this deep into your allocations? Depends.
+If you know the code you are writing will be in the &ldquo;hot-path&rdquo; its empowering to know what your allocation profile looks like.
+Learning the skills to performance tune is addicting and powerful but writing code that can be read and easily maintained should always be the first goal.
+That being said I do think every engineer should go down the rabbit hole at least once. Its a lot of fun.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Git Worktree Flow</title>
+            <link>http://example.org/posts/git-worktree-flow/</link>
+            <pubDate>Thu, 06 Aug 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/git-worktree-flow/</guid>
+            <description>A workflow for keeping clean commit histories.</description>
+            <content type="html"><![CDATA[<p>What does death and Git have in common?</p>
+<p>Just like death, Git is a fact of life for engineers writing code in 2021.</p>
+<p>Just like death, some people fear Git while others come to terms with it.</p>
+<p>It&rsquo;s safe to say there is no avoiding Git, like there is no avoiding death, may as well make it work for us.</p>
+<p>In this post I will share a new workflow utilizing Git&rsquo;s worktree feature that has been working well for me.</p>
+<h1 id="the-scenario">The Scenario</h1>
+<p>A repository exists, a topic branch is checked out, and it is complete.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git log
+commit 2d27894d5f6876ae456470f59a21bbd77184a853 <span style="color:#f92672">(</span>HEAD -&gt; topic-branch<span style="color:#f92672">)</span>
+Author: louis &lt;louis@localhost.localdomain&gt;
+Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:02:10 <span style="color:#ae81ff">2020</span> -0400
+
+  implement plumbing
+
+commit 1cecb9d66c84cc007479330eec08ce74ae583cd2
+Author: louis &lt;louis@localhost.localdomain&gt;
+Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:36 <span style="color:#ae81ff">2020</span> -0400
+
+  implement business logic
+
+commit abff991f6549435d2d8140182fc37603cff1a2c4
+Author: louis &lt;louis@localhost.localdomain&gt;
+Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:12 <span style="color:#ae81ff">2020</span> -0400
+
+  implement storage
+</code></pre></div><p>The commit structure is clean, organized, and communicates a clean trajectory of deployment.</p>
+<h1 id="time-for-review">Time For Review</h1>
+<p>A pull-request is opened against the mainline branch and a code review takes place.</p>
+<p>The requested changes are scattered across the clean commit history.</p>
+<p>A typical approach would involve making all the changes in a new commit with a comment such as &ldquo;code review changes&rdquo;.</p>
+<p>This approach is reasonable but wouldn&rsquo;t it be nice to keep the well organized commit history designed from the beginning?</p>
+<h1 id="worktree-to-the-rescue">Worktree To The Rescue</h1>
+<p>A Git worktree allows the same repository to exist in multiple file system directories at once.</p>
+<p>The worktree repository can have any branch checked out including a new one.</p>
+<p>To handle the code review changes but keep our commit structure the same a worktree can be created.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git worktree add ../myrepo-pr-changes
+Preparing worktree <span style="color:#f92672">(</span>new branch <span style="color:#e6db74">&#39;myrepo-pr-changes&#39;</span><span style="color:#f92672">)</span>
+HEAD is now at 2d27894 implement plumbing
+
+$ cd ../myrepo-pr-changes
+</code></pre></div><p>The command displayed above creates the worktree directory &ldquo;myrepo-pr-changes&rdquo; one directory above our current, creates the branch &ldquo;myrepo-pr-changes&rdquo;, and check this branch out in the worktree.</p>
+<p>The branch &ldquo;myrepo-pr-changes&rdquo; will be a staging area where the changes required to pass the code review can be implemented.</p>
+<p>This branch allows for all the niceties of a normal topic branch, you may author commits, reset any changes which you decide are not valuable, push this branch to save your work, etc&hellip;</p>
+<h1 id="checking-out-from-worktree">Checking Out From Worktree</h1>
+<p>At this stage the worktree branch &ldquo;myrepo-pr-changes&rdquo; has all the commits necessary to comfort your code reviewers.</p>
+<p>It is time to get these changes back into the topic branch.</p>
+<p>We can diff the code between &ldquo;topic-branch&rdquo; and &ldquo;myrepo-pr-change&rdquo; worktree branch.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git diff --name-only topic-branch myrepo-pr-changes
+businesslogic.go
+plumbing.go
+store.go
+</code></pre></div><p>The diff shows that specific files have changed in order to appease our code reviewers.</p>
+<p>An interactive rebase can get these changes into the correct commits by returning to the original repository directory.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ cd ../myrepo        
+
+$ git rebase -i HEAD~2
+
+</code></pre></div><p>Next the interactive prompt is displayed</p>
+<p>By specifying &ldquo;edit&rdquo; in one of our commits the changes present in the diff between &ldquo;topic-branch&rdquo; and &ldquo;myrepo-pr-changes&rdquo; can be checked out.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git rebase -i HEAD~2
+Stopped at 1cecb9d...  implement business logic
+You can amend the commit now, with
+
+git commit --amend
+
+Once you are satisfied with your changes, run
+
+git rebase --continue
+
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git checkout myrepo-pr-changes -- businesslogic.go
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git status
+interactive rebase in progress; onto abff991
+Last command <span style="color:#66d9ef">done</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> command <span style="color:#66d9ef">done</span><span style="color:#f92672">)</span>:
+ edit 1cecb9d implement business logic
+Next command to <span style="color:#66d9ef">do</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> remaining command<span style="color:#f92672">)</span>:
+ pick 2d27894 implement plumbing
+<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --edit-todo&#34;</span> to view and edit<span style="color:#f92672">)</span>
+You are currently editing a commit <span style="color:#66d9ef">while</span> rebasing branch <span style="color:#e6db74">&#39;topic-branch&#39;</span> on <span style="color:#e6db74">&#39;abff991&#39;</span>.
+<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git commit --amend&#34;</span> to amend the current commit<span style="color:#f92672">)</span>
+<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --continue&#34;</span> once you are satisfied with your changes<span style="color:#f92672">)</span>
+
+Changes to be committed:
+<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git restore --staged &lt;file&gt;...&#34;</span> to unstage<span style="color:#f92672">)</span>
+  modified:   businesslogic.go
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git commit --amend
+</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git rebase --continue
+Successfully rebased and updated refs/heads/topic-branch.
+</code></pre></div><p>In the above Git sequence the interactive rebase has paused on the &ldquo;implement business logic&rdquo; after choosing &ldquo;edit&rdquo;.</p>
+<p>The file &ldquo;businesslogic.go&rdquo; from our &ldquo;myrepo-pr-changes&rdquo; branch is checked out immediately adding it to our staged commits.</p>
+<p>An amendment is made to &ldquo;implement business logic&rdquo; commit, incorporating the changes in &ldquo;businesslogic.go&rdquo;.</p>
+<p>The rebase is told to continue and subsequently finishes.</p>
+<h1 id="conclusion">Conclusion</h1>
+<p>Being a bit of an eccentric about commit history, a well defined workflow for keeping things neat is attractive to me.</p>
+<p>The use of worktrees, cross branch checkouts, and interactive rebases creates one that has worked well so far.</p>
+<p>I hope this post gets the gears turning for your own workflows.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Sequential Consistency In Practice</title>
+            <link>http://example.org/posts/sequential-consistency-in-practice/</link>
+            <pubDate>Thu, 16 Jul 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/sequential-consistency-in-practice/</guid>
+            <description>Clarification on sequential consistency and distributed system</description>
+            <content type="html"><![CDATA[<p>If you are a software engineer today concurrency is everywhere.</p>
+<p>On the front-end it manifests as asynchronous web requests, the backend as service-to-service communication, and in systems programming as SMP and thread safety.</p>
+<p>With the ubiquity of programming with the 4th dimension in mind it&rsquo;s valuable to expand on the building blocks.</p>
+<p>One of these blocks comes in the form of consistency models: specific rules which govern concurrent access to shared resources.</p>
+<p>With a focus on sequential consistency I&rsquo;d like to show you how this model is used in practice with distributed systems.</p>
+<h2 id="sequential-consistency">Sequential Consistency</h2>
+<p>A conversation with an ex-colleague and friend, centered around the topic, influenced him to write up a nice explanation of sequential consistency.</p>
+<p>You can check out that article <a href="http://space.af/blog/2020/07/16/sequential-consistency-described-by-viotti-and-vukolic/">here</a>, I will expand on it a bit.</p>
+<p>In the article referenced above it&rsquo;s explained that in sequential consistency a processor may view writes of other processors in any interleaving, as long as those interleavings remain in the same order.</p>
+<p>In short recap:</p>
+<pre><code>        Proc-1   Proc-2
+         W(x)     W(y)
+         W(z)
+
+
+Valid:  W(x),W(z),W(y)
+        W(y),W(x),W(z)
+        W(x),W(y),W(z)
+
+Invalid:  W(z),W(x),W(Y)
+</code></pre><p>The invalid interleaving is such due to Proc-1&rsquo;s writes happening out of Proc-1&rsquo;s program order.</p>
+<h2 id="expanding-on-sequential-consistency">Expanding On Sequential Consistency</h2>
+<p>While the provided definition of sequential consistency is easy to follow for two processors it gets a bit more interesting when we model a distributed system.</p>
+<p>In our distributed system two processes will be issuing writes to a shared register and two other processes will be observing those writes and then issuing a read.</p>
+<p>Each process is to obey sequential consistency.</p>
+<pre><code>        Proc-1      Proc-2
+         W(x)        W(y)
+         W(z)
+
+
+Proc-3 Observes: W(x),W(z),W(y), R() =&gt; y
+
+Proc-4 Observes: W(y),W(x),W(z), R() =&gt; z
+</code></pre><p>Here we notice that Proc-3 and Proc-4 do not agree on the shared register&rsquo;s value, yet this is legal in sequential consistency.</p>
+<p>As you can imagine, in practice this is not the desired behavior.</p>
+<h2 id="sequential-consistency-in-practice">Sequential Consistency In Practice</h2>
+<p>In order for sequential consistency to be useful in a distributed system another mechanism must be provided to ensure all processes see the <strong>same</strong> interleaving of operations.</p>
+<p>A slide from Martin Kleppmann&rsquo;s great <a href="https://www.youtube.com/watch?v=D5iCl12MuRw&amp;feature=youtu.be">talk</a> provides one such mechanism.</p>
+<p><img src="/martin-klepmann-sequential-consistency.png" alt="async writes in sequential system"></p>
+<ol>
+<li>Martin Kleppmann on “Sequential Consistency versus Linearizability”</li>
+</ol>
+<p>This slide shows that all writes are fed through a &ldquo;transaction processor&rdquo; to create one consistent interleaving of sequential operations.</p>
+<p>Due to network delay each processor may &ldquo;lag&rdquo; behind, seeing older or newer writes then the others.</p>
+<p>However each processor will <strong>always</strong> observe a totally ordered sequential list of operations.</p>
+<p>Therefore per the consistency model:</p>
+<ul>
+<li>the second processor may read the N-1 write until the network delivers write N.</li>
+<li>no processor who has received write N will read write N-1.</li>
+<li>every process will observe a sequentially consistent total ordered history of operations.</li>
+</ul>
+<h2 id="in-conclusion">In Conclusion</h2>
+<p>In the practice of designing distributed systems sequential consistency requires some mechanism to obtain a consistent read of a shared register across processes.</p>
+<p>When &ldquo;sequential consistency&rdquo; is mentioned in regards to a distributed system what is usually being expressed is the ability for processors to &ldquo;lag&rdquo; behind observing changes, but eventually seeing all changes in a well defined total order.</p>
+<p>A secondary mechanism, whether a dedicated process, vector clocks, or fence id, must be present to enforce that each process sees a totally ordered sequence of events.</p>
+<hr>
+<p>edits:</p>
+<ul>
+<li>fix on valid sequential interleavings in first example.</li>
+</ul>
+]]></content>
+        </item>
+        
+        <item>
+            <title>The Good With The Bad: Go&#39;s net/url.URL and JSON</title>
+            <link>http://example.org/posts/go-url-encoding/</link>
+            <pubDate>Sat, 11 Jul 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/go-url-encoding/</guid>
+            <description>Why seemingly inconvenient approaches lead to value in the long run.</description>
+            <content type="html"><![CDATA[<p>A rather common task presented itself while working on <a href="https://github.com/quay/clair">Clair</a> this week.</p>
+<p>A URL needed to be generated in one service and communicated to another one.
+Like most would, JSON was to be used as the encoding and HTTP as the transport mechanism.
+A common task in most languages but a caveat exists in Go.</p>
+<p>Logically a net/url.URL would be encoded as a string and transported in JSON as such data type.
+Looking at the net/url.URL source code we see no implementations for json.Marshaler/json.Unmarshaller nor encoding.TextMarshaller/encoding.TextUnmarshaller.</p>
+<p>It becomes the programmer&rsquo;s responsibility to implement this behavior.</p>
+<h2 id="the-solution">The Solution</h2>
+<p>Several ways exist to solve the problem.
+The way chosen in Clair is as follows.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Webhook holds the details for clients to call back the Notifier
+</span><span style="color:#75715e">// and receive notifications.
+</span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Webhook</span> <span style="color:#66d9ef">struct</span> {
+<span style="color:#a6e22e">NotificationID</span> <span style="color:#a6e22e">uuid</span>.<span style="color:#a6e22e">UUID</span> <span style="color:#e6db74">`json:&#34;notification_id&#34;`</span>
+<span style="color:#a6e22e">Callback</span>       <span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">URL</span>   <span style="color:#e6db74">`json:&#34;callback&#34;`</span>
+}
+
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">wh</span> <span style="color:#a6e22e">Webhook</span>) <span style="color:#a6e22e">MarshalJSON</span>() ([]<span style="color:#66d9ef">byte</span>, <span style="color:#66d9ef">error</span>) {
+<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">m</span> = <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">string</span>{
+  <span style="color:#e6db74">&#34;notification_id&#34;</span>: <span style="color:#a6e22e">wh</span>.<span style="color:#a6e22e">NotificationID</span>.<span style="color:#a6e22e">String</span>(),
+  <span style="color:#e6db74">&#34;callback&#34;</span>:        <span style="color:#a6e22e">wh</span>.<span style="color:#a6e22e">Callback</span>.<span style="color:#a6e22e">String</span>(),
+}
+<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Marshal</span>(<span style="color:#a6e22e">m</span>)
+}
+
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">wh</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Webhook</span>) <span style="color:#a6e22e">UnmarshalJSON</span>(<span style="color:#a6e22e">b</span> []<span style="color:#66d9ef">byte</span>) <span style="color:#66d9ef">error</span> {
+<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">m</span> = make(<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">string</span>, <span style="color:#ae81ff">2</span>)
+<span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">json</span>.<span style="color:#a6e22e">Unmarshal</span>(<span style="color:#a6e22e">b</span>, <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">m</span>)
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">err</span>
+}
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>[<span style="color:#e6db74">&#34;notification_id&#34;</span>]; !<span style="color:#a6e22e">ok</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;json unmarshal failed. webhook requires a \&#34;notification_id\&#34; field&#34;</span>)
+}
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">ok</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>[<span style="color:#e6db74">&#34;callback&#34;</span>]; !<span style="color:#a6e22e">ok</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;json unmarshal failed. webhook requires a \&#34;callback\&#34; field&#34;</span>)
+}
+
+<span style="color:#a6e22e">uid</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">uuid</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">m</span>[<span style="color:#e6db74">&#34;notification_id&#34;</span>])
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;json unmarshal failed. malformed notification uuid: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+}
+<span style="color:#a6e22e">cbURL</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">url</span>.<span style="color:#a6e22e">Parse</span>(<span style="color:#a6e22e">m</span>[<span style="color:#e6db74">&#34;callback&#34;</span>])
+<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;json unmarshal failed. malformed callback url: %v&#34;</span>, <span style="color:#a6e22e">err</span>)
+}
+
+(<span style="color:#f92672">*</span><span style="color:#a6e22e">wh</span>).<span style="color:#a6e22e">NotificationID</span> = <span style="color:#a6e22e">uid</span>
+(<span style="color:#f92672">*</span><span style="color:#a6e22e">wh</span>).<span style="color:#a6e22e">Callback</span> = <span style="color:#f92672">*</span><span style="color:#a6e22e">cbURL</span>
+<span style="color:#66d9ef">return</span> <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><p>Implementing the MarshalJSON and UnmarshalJSON methods for the entire struct was feasible since it&rsquo;s small and maps nicely into a <code>go map[string]string</code> data structure.</p>
+<p>If the struct were larger or consisted of heterogeneous field types one may decide implementing a custom type is simpler.</p>
+<p>The downside to the former approach appears in forced type conversions littering the code.</p>
+<h2 id="so-why">So&hellip; Why</h2>
+<p>An obvious question is likely rattling around your brain right now.</p>
+<p>Why did the stdlib developers not implement the basic interface methods aligning with the most common use cases?</p>
+<p>The source code holds a clue:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#75715e">// Marshaling interface implementations.
+</span><span style="color:#75715e">// Would like to implement MarshalText/UnmarshalText but that will change the JSON representation of URLs.
+</span><span style="color:#75715e"></span>
+<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">u</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">URL</span>) <span style="color:#a6e22e">MarshalBinary</span>() (<span style="color:#a6e22e">text</span> []<span style="color:#66d9ef">byte</span>, <span style="color:#a6e22e">err</span> <span style="color:#66d9ef">error</span>) {
+  <span style="color:#66d9ef">return</span> []byte(<span style="color:#a6e22e">u</span>.<span style="color:#a6e22e">String</span>()), <span style="color:#66d9ef">nil</span>
+}
+</code></pre></div><p>The reason lies in Go&rsquo;s strict backwards compatibility promise.</p>
+<p>In a hypothetical, lets say the appropriate marshalling methods were introduced in Go 1.14.</p>
+<p>Two services exist A and B which communicate a &ldquo;net/url.URL&rdquo; structure via JSON/HTTP and no custom marshalling methods were implemented like above.</p>
+<p>Service A is rebuilt in Go 1.14.</p>
+<p>When service A receives the &ldquo;net/url.URL&rdquo; it will receive json similar to:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;url&#34;</span>: {<span style="color:#f92672">&#34;Scheme&#34;</span>:<span style="color:#e6db74">&#34;http&#34;</span>,<span style="color:#f92672">&#34;Opaque&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#f92672">&#34;User&#34;</span>:<span style="color:#66d9ef">null</span>,<span style="color:#f92672">&#34;Host&#34;</span>:<span style="color:#e6db74">&#34;www.google.com&#34;</span>,<span style="color:#f92672">&#34;Path&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#f92672">&#34;RawPath&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#f92672">&#34;ForceQuery&#34;</span>:<span style="color:#66d9ef">false</span>,<span style="color:#f92672">&#34;RawQuery&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>,<span style="color:#f92672">&#34;Fragment&#34;</span>:<span style="color:#e6db74">&#34;&#34;</span>}}
+</code></pre></div><p>When service B receives the &ldquo;net/url.URL&rdquo; it will receive json similar to:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-json" data-lang="json">{<span style="color:#f92672">&#34;url&#34;</span>: <span style="color:#e6db74">&#34;http://www.google.com&#34;</span>}
+</code></pre></div><p>In both cases the Unmarshal will fail due to the data structures not aligning correctly.</p>
+<p>This breaks the ability for an older service, B to talk to a new service A.</p>
+<h2 id="the-good-with-the-bad">The Good with the Bad</h2>
+<p>Many developers will read this post, look at the portion of code required to achieve a common and mundane task, and write Go off as inconvenient.</p>
+<p>While I sympathize, and to a degree agree, I also see a valuable principal being adhered to.</p>
+<p>Many languages suffer from compatibility issues which not only cripple productivity but also lose real money when downtime incurs.</p>
+<p>Knowing the Go team is making full effort to avoid these scenarios is a good thing.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Building A Home Lab With Podman - Pt2</title>
+            <link>http://example.org/posts/home-network-pt2/</link>
+            <pubDate>Fri, 03 Jul 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/home-network-pt2/</guid>
+            <description>Application routing is introduced into the home lab</description>
+            <content type="html"><![CDATA[<p>In <a href="/blog/home-network-pt1">Part 1</a> of this series I explain the desire to create a minimal home network running on containers, the stack being used to accomplish this, and how name resolution will work.</p>
+<p>This post will cover how services running as containers are routed.</p>
+<h2 id="application-routing">Application Routing</h2>
+<p>While it&rsquo;s possible to port-forward every application container running on &ldquo;ct-host&rdquo; an issue exists with this approach.
+DNS alone is not capable of routing hostnames to particular ports.
+In other words asking DNS to “map x.ldelossa.net =&gt; 192.168.1.100:8080” is not possible.</p>
+<p>An application routing mechanism is required for this.</p>
+<pre><code>       +-----------------------------------------------------------------------+
+       |container network                                                      |
+       |  10.89.0.0/24                                                         |
+       |                                                    +------------+     |
+       |                               +--------------------&gt; Prometheus |     |
+       |                               |                    +------------+     |
+       |                               |                         :80           |
+       |                               |                          ^            |
+       |                               |                          |            |
+       |                           +---+-----+                    |            |
+       |   +-----------+           |         |              +-----+------+     |
+       +---+  CoreDNS  &lt;-----------+ CT-Host +--------------&gt; App Router +-----+
+           +-----------+           |         |              +------------+
+         192.168.185.10:53         +---------+             192.168.185.10:80
+                 ^                                                ^
+                 |                                                |
+                 |                                                |
+                 |                +-----------+                   |
+                 |                |           |                   |
+                 +----------------+Workstation+-------------------+
+              DNS Query           |           |              Route Mapping
+prom.ldelossa.net =&gt; 192.168.185.10 +-----------+   prom.ldelossa.net =&gt; prometheus:80
+</code></pre><p>In the following diagram:</p>
+<ul>
+<li>A workstation makes a request for &ldquo;prom.ldelossa.net&rdquo;</li>
+<li>Our CoreDNS container answers the request with the ip address of &ldquo;ct-host&rdquo;</li>
+<li>Our app router is listening on port 80 and 443, the default ports a web browser will use when connecting to a web address.</li>
+<li>When the app router receives the request for the hostname &ldquo;prom.ldelossa.net&rdquo; it will forward this to the prometheus container running inside the container network.</li>
+<li>The request will be routed back through the app router and returned to the Workstation.</li>
+</ul>
+<p>The app router will also provide a redirection mechanism allowing hostnames to be mapped to forwarded ports on &ldquo;ct-host&rdquo;.</p>
+<h2 id="traefik">Traefik</h2>
+<p>Traefik will be the application routing mechanism.</p>
+<p>Personally, I don&rsquo;t have any experience running Traefik in production and this post isn&rsquo;t necessarily a plug for the application.</p>
+<p>However, it uses a modern configuration syntax, provides path routing and redirecting, has a pretty good UI, and comprehendable documentation.</p>
+<p>Traefik being written in Go is an added benefit as playing with Go projects help me design my own in the long run.</p>
+<h3 id="configuration">Configuration</h3>
+<p>It won&rsquo;t do much good echoing the already great documentation at <a href="https://docs.containo.us/">Traefik&rsquo;s</a> site.
+If you are interested in using Traefik check out their documentation.</p>
+<p>The following shows this lab&rsquo;s configuration.</p>
+<p>static configuration:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">api</span>]
+<span style="color:#a6e22e">insecure</span> = <span style="color:#66d9ef">true</span>
+<span style="color:#a6e22e">dashboard</span> = <span style="color:#66d9ef">true</span>
+<span style="color:#a6e22e">debug</span> = <span style="color:#66d9ef">true</span>
+
+[<span style="color:#a6e22e">entryPoints</span>]
+[<span style="color:#a6e22e">entryPoints</span>.<span style="color:#a6e22e">web</span>]
+  <span style="color:#a6e22e">address</span> = <span style="color:#e6db74">&#34;:80&#34;</span>
+
+[<span style="color:#a6e22e">providers</span>]
+[<span style="color:#a6e22e">providers</span>.<span style="color:#a6e22e">file</span>]
+  <span style="color:#a6e22e">filename</span> = <span style="color:#e6db74">&#34;/etc/traefik/dyn.toml&#34;</span>
+  <span style="color:#a6e22e">watch</span> = <span style="color:#66d9ef">true</span>
+</code></pre></div><p>dynamic configuration:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-toml" data-lang="toml">[<span style="color:#a6e22e">http</span>]
+[<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">routers</span>]
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">routers</span>.<span style="color:#a6e22e">prom</span>]
+    <span style="color:#a6e22e">rule</span> = <span style="color:#e6db74">&#34;Host(`prom.ldelossa.net`)&#34;</span>
+    <span style="color:#a6e22e">service</span> = <span style="color:#e6db74">&#34;prom&#34;</span>
+
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">routers</span>.<span style="color:#a6e22e">ct</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">host</span>]
+    <span style="color:#a6e22e">rule</span> = <span style="color:#e6db74">&#34;Host(`ct-host.ldelossa.net`)&#34;</span>
+    <span style="color:#a6e22e">middlewares</span> = [<span style="color:#e6db74">&#34;netdata-redirect&#34;</span>]
+    <span style="color:#a6e22e">service</span> = <span style="color:#e6db74">&#34;dummy&#34;</span>
+
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">routers</span>.<span style="color:#a6e22e">traefik</span>]
+    <span style="color:#a6e22e">rule</span> = <span style="color:#e6db74">&#34;Host(`traefik.ldelossa.net`)&#34;</span>
+    <span style="color:#a6e22e">middlewares</span> = [<span style="color:#e6db74">&#34;traefik-redirect&#34;</span>]
+    <span style="color:#a6e22e">service</span> = <span style="color:#e6db74">&#34;dummy&#34;</span>
+
+[<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">middleware</span>]
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">middlewares</span>.<span style="color:#a6e22e">netdata</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">redirect</span>.<span style="color:#a6e22e">redirectRegex</span>]
+    <span style="color:#a6e22e">regex</span> = <span style="color:#e6db74">&#34;^http://ct-host.ldelossa.net(.*)&#34;</span>
+    <span style="color:#a6e22e">replacement</span> = <span style="color:#e6db74">&#34;http://ct-host.ldelossa.net:19999&#34;</span>
+
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">middlewares</span>.<span style="color:#a6e22e">traefik</span><span style="color:#960050;background-color:#1e0010">-</span><span style="color:#a6e22e">redirect</span>.<span style="color:#a6e22e">redirectRegex</span>]
+    <span style="color:#a6e22e">regex</span> = <span style="color:#e6db74">&#34;^http://traefik.ldelossa.net(.*)&#34;</span>
+    <span style="color:#a6e22e">replacement</span> = <span style="color:#e6db74">&#34;http://traefik.ldelossa.net:8080&#34;</span>
+
+[<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">services</span>]
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">services</span>.<span style="color:#a6e22e">dummy</span>.<span style="color:#a6e22e">loadBalancer</span>]
+  [<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">services</span>.<span style="color:#a6e22e">prom</span>.<span style="color:#a6e22e">loadBalancer</span>]
+    [[<span style="color:#a6e22e">http</span>.<span style="color:#a6e22e">services</span>.<span style="color:#a6e22e">prom</span>.<span style="color:#a6e22e">loadBalancer</span>.<span style="color:#a6e22e">servers</span>]]
+      <span style="color:#a6e22e">url</span> = <span style="color:#e6db74">&#34;http://prom:9090&#34;</span>
+</code></pre></div><p>Traefik is split into two configs: static and dynamic.</p>
+<p>The static configuration sets up a listening socket on port :80 and this port is exposed on &ldquo;ct-host&rdquo;.
+The dynamic configuration that Traefik will watch during runtime is defined as well.</p>
+<p>Dynamic configuration defines our routers, middleware, and services.
+Hostname routing rules are defined mapping &ldquo;prom.ldelossa.net&rdquo; to the &ldquo;service&rdquo; prom.
+A &ldquo;service&rdquo; will forward traffic to the specified address, in this case the prometheus container.</p>
+<p>Middleware features are used to redirect requests for &ldquo;ct-host.ldelossa.net&rdquo; and &ldquo;traefik.ldelossa.net&rdquo; to ports forwarded on &ldquo;ct-host&rdquo;.
+A dummy &ldquo;service&rdquo; is created for the redirection as no traffic will be forwarded.</p>
+<h2 id="deployment">Deployment</h2>
+<p>The Traefik container is deployed in a container using Podman and is managed via Systemd in the same fashion explained in part 1 of this series.</p>
+<pre><code class="language-console" data-lang="console">$ podman run -dt --network ct-host --name traefik -p 192.168.185.10:8080:8080 -p 192.168.185.10:80:80 -v /etc/containers/etc.d/traefik:/etc/traefik traefik:latest
+</code></pre><p>Make note that pots 8080 and 80 are exposed on &ldquo;ct-host&rdquo; directly, allowing devices on the local lan to access.
+The configuration files are also mapped from the host allowing for easy maintenance from &ldquo;ct-host&rdquo;.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>By introducing appliation routing into the lab several goals are achieved.</p>
+<ul>
+<li>Containers do not need to expose ports on the local lan to be accessed.</li>
+<li>Containers can be accessed by a hostname.</li>
+<li>Hostnames can be redirected to containers exposed directly on &ldquo;ct-host&rdquo;.</li>
+</ul>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Building A Home Lab With Podman - Pt1</title>
+            <link>http://example.org/posts/home-network-pt1/</link>
+            <pubDate>Wed, 01 Jul 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/home-network-pt1/</guid>
+            <description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description>
+            <content type="html"><![CDATA[<p><em>Checkout <a href="/blog/posts/home-network-pt2.post">Part 2</a> For Application Routing</em></p>
+<p>It&rsquo;s common to set up a network, a few virtual hosts, and fundamental network services at home as a way to learn how these technologies interact.</p>
+<p>While moving apartments in Brooklyn I discovered a Thinkpad laptop just collecting dust.
+The laptop had good specs and a 1TB ssd.
+I wanted to put this bad boy to use.</p>
+<p>Soon the idea of creating a modern lab based on containers, free of noisy and expensive equipment, took hold.</p>
+<p>This post introduces network topology, components which make up the network, and how name resolution is achieved.</p>
+<h2 id="the-stack">The Stack</h2>
+<ul>
+<li>Podman - a daemonless container runtime that works well with SystemD</li>
+<li>CoreDNS - a DNS server that uses a ton of plugins to implement name resolution.</li>
+<li>NetData - a C monitoring daemon which scrapes /proc for every metric you can think of.</li>
+<li>Traefik - a service routing solution which supports path routing, redirects, and load balancing.</li>
+<li>Fedora32 - good ol' fedora linux as a host operating system (shameless plug).</li>
+</ul>
+<p>Above is the software stack used in the lab.</p>
+<h2 id="the-network">The Network</h2>
+<p>A typical home network consists of a modem, a router with a built in switch and WiFi, and devices which connect to a local LAN.
+This lab will introduce an additional host for creating and exposing containers.</p>
+<pre><code class="language-console" data-lang="console">+----------+  +--------+
+|  Laptop  |  | Iphone |
++-----+----+  +---+----+
+    |           |
+    |           |
+    |           |
+    |           |
++-----+-----------+----+                    +------------------------------+
+|                      |                    |                              |
+| LAN 192.168.185.0/24 |                    |  CONTAINER-LAN 10.89.0.0/24  |
+|                      |                    |                              |
++---------+------------+                    +-------+----------------------+
+        |                                         |
+        |                                         |
+        | port forward +-----------+              |
+        +--------------+ CONTAINER +--------------+
+        |              +-----^-----+              |
+        |                    | podman run         |
+        |              +-----+-----+              |
+        |              |           |              |
+        +--------------+  CT-HOST  +--------------+
+                       |           |
+                       +-----------+
+</code></pre><p>The network will look like this.</p>
+<p>CT-HOST is a Fedora32 laptop running Podman and will manage container lifecycles.
+The host resides on two networks: LAN (192.168.185.0/24) where devices communicate and CONTAINER-LAN (10.89.0.0/24) where containers communicate.
+The CONTAINER-LAN is virtual and created by the linux kernel.</p>
+<p>Containers may be exposed on &ldquo;ct-host&rdquo; to devices on LAN by port-forwarding the container&rsquo;s port onto the hosts.
+Not every container needs to have their ports forwarded but to achieve name resolution this is required.</p>
+<h2 id="name-resolution">Name Resolution</h2>
+<p>Name resolution provides mapping from a hostname to a service.
+This is encountered every time &ldquo;<a href="http://www.google.com">www.google.com</a>&rdquo; is typed into a browser.
+The name &ldquo;<a href="http://www.google.com">www.google.com</a>&rdquo; is resolved to an IP address where web servers provide this service.
+This lab creates the <code>ldelossa.net</code> local domain.</p>
+<p>Personally, I don&rsquo;t want to write RFC 1035 zone files, host ancient bind servers, or deal with cryptic configs.
+There is a certain beauty in the syntax of a hosts file.
+A simple text file which maps a hostname to an IP address suits my needs well.
+The answer was found in <a href="https://coredns.io/">CoreDNS</a> and its <a href="https://coredns.io/plugins/hosts/">hosts</a> plugin.</p>
+<p>On top of a terse syntax the &ldquo;hosts&rdquo; plugin provides dynamic reloading.
+Changes to the file holding your hostname mappings will reload the server, the changes taking effect soon after.</p>
+<h3 id="podman">Podman</h3>
+<p>Podman is the container runtime used in this lab.</p>
+<p>Podman and Systemd play along nicely.
+Systemd services can be generated directly from Podman.
+These service files can be used to start the container on boot, restart it on failure, create dependencies between containers, or other facilities Systemd offers.</p>
+<h3 id="coredns-container">CoreDNS Container</h3>
+<p>configuration:</p>
+<pre><code class="language-console" data-lang="console">$ cat Corefile
+.:53 {
+cache 10
+forward . 8.8.8.8 9.9.9.9
+log
+errors
+}
+
+ldelossa.net {
+cache 10
+hosts /etc/coredns/hosts {
+}
+}
+$ cat hosts
+192.168.185.10 traefik.ldelossa.net
+192.168.185.10 ct-host.ldelossa.net
+192.168.185.10 prom.ldelossa.net
+</code></pre><p>CoreDNS with the host plugin uses two configuration files: &ldquo;Corefile&rdquo; and &ldquo;hosts&rdquo; file.</p>
+<p>The &ldquo;Corefile&rdquo; configures Coredns to forward requests not destined for <code>ldelossa.net</code> to Google&rsquo;s DNS and cache the results for a bit.
+Any requests for <code>ldelossa.net</code> are forwarded to the &ldquo;hosts&rdquo; plugin, using the file <code>/etc/coredns/hosts</code>.</p>
+<p>The &ldquo;hosts&rdquo; defines hostname mappings.
+For each entry in this file Coredns will return an A record mapping the hostname to the IP address.</p>
+<pre><code class="language-console" data-lang="console">$ podman create --network ct-host --name coredns -dt -p 192.168.185.10:53:53/tcp -p 192.168.185.10:53:53/udp -v /etc/containers/etc.d/coredns:/etc/coredns coredns/coredns -conf /etc/coredns/Corefile
+</code></pre><p>Above shows the podman command used to create the container.</p>
+<p>A few things to note</p>
+<ul>
+<li>Port 53(udp/tcp) is exposed to other devices on LAN via port-forwarding</li>
+<li>Configuration files are mapped from <code>/etc/containers/etc.d/coredns</code> to <code>/etc/coredns</code> inside the container.</li>
+<li>Editing the &ldquo;hosts&rdquo; file on &ldquo;ct-host&rdquo; will reload Coredns without having to restart the container.</li>
+</ul>
+<pre><code class="language-console" data-lang="console">$ podman generate systemd --name coredns &gt; /etc/systemd/system/coredns-container.service
+$ systemctl daemon-reload
+$ systemctl enable coredns-container
+$ systemctl start coredns-container
+</code></pre><p>A SystemD service can be generated and enabled with the commands above.</p>
+<h3 id="configuring-devices">Configuring Devices</h3>
+<p>A typical approach to configuring devices to utilize a custom DNS server would be DHCP.
+Unfortunately my router does not allow the configuration of DHCP (poo-poo to you ampliFi).
+However, devices can &ldquo;opt-in&rdquo; by setting their DNS server to <code>192.168.185.10:53</code>.</p>
+<p>As new services come onto the network simply editing <code>/etc/containers/etc.d/coredns/hosts</code> on &ldquo;ct-host&rdquo; will provide immediate resolution for devices configured with this DNS.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Home labs are a great way to learn new technologies.
+By utilizing Podman and CoreDNS a solution for name resolution was devised.
+Mapping configuration files from the host into containers provides a fast and dynamic way to update DNS in the lab.</p>
+<p>In <a href="/blog/posts/home-network-pt2.post">Part 2</a> a mechanism for routing hostnames to specific containerized services is introduced.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Linux Foundation&#39;s LFD420 Review</title>
+            <link>http://example.org/posts/lfd420-review/</link>
+            <pubDate>Thu, 25 Jun 2020 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/lfd420-review/</guid>
+            <description>My review of the Linux Foundation&amp;rsquo;s course Linux Kernel Internals and Development (LFD420)</description>
+            <content type="html"><![CDATA[<p>The low level details of operating systems are fascinating but often hard to acquire.
+Books on the topic usually cover only user space systems programming leaving out kernel native development all together.
+When material is discovered on the topic it&rsquo;s often out of date as the kernel moves quickly in development.</p>
+<p>Seeking a deeper understanding I asked my current employer Red Hat if they would assist.
+Generously they agreed to enroll me in the Linux Foundation&rsquo;s Linux Kernel Internals and Development (LFD420) course.</p>
+<p>I want to provide the community with an honest review of this course so others can determine if it&rsquo;s right for them.</p>
+<h2 id="my-background">My Background</h2>
+<p>Before jumping into the course details I&rsquo;d like to share my background.</p>
+<p>At the start of my career I worked in performance, systems, and network engineering.
+In these positions I wrote little code but I worked on low level system details.
+It was not rare for my teams to be tuning kernel parameters, adjusting virtual host numa localities, squeezing performance out of routing infrastructure, and so on.</p>
+<p>Over the years my interest has evolved further into software development but the affinity for systems has not lessened.
+As of today I am a full time software engineer.</p>
+<p>I do not write production C code but know enough to get by.</p>
+<h2 id="the-course">The Course</h2>
+<p>The course is closed source and proprietary.
+For this reason I will provide overviews and not specifics.
+The course outline can be seen here:
+<a href="https://training.linuxfoundation.org/training/linux-kernel-internals-and-development/">https://training.linuxfoundation.org/training/linux-kernel-internals-and-development/</a></p>
+<h2 id="attendance">Attendance</h2>
+<p>Attendance is via teleconference.
+A physical copy of the course material is mailed to you before the course begins.
+This material is identical to the slides the instructor will use during the course.
+Zoom was used, which I am not a fan of, but luckily the browser functionalities worked fine and a desktop client was not required.</p>
+<h2 id="workstation-setup">Workstation Setup</h2>
+<p>It is your choice whether you&rsquo;d like to use a VM the foundation provides, your own native machine, a cloud machine, or a VM you provide on your own.
+There is no requirement on the distribution used.
+A script is provided to you to ensure the correct packages are installed on your machine to complete the course.
+Oddly, the package list it installed was pretty large and I&rsquo;m confident most of it is unnecessary.</p>
+<p>I started the course on a bare metal laptop running Fedora 32.
+While working through labs I found my kernel becoming tainted (from loading out of tree modules), permanent run-time leaks from forgetting k-free, and crashing kernel modules quite regularly.</p>
+<p>After the first day I decided a VM is definitely the way to go for this course.
+I suggest anyone enrolled in the course to work on a virtual machine and one you do not mind throwing away at the end of the course.
+I&rsquo;ll go over my VM setup a little later in this post.</p>
+<h2 id="structure">Structure</h2>
+<p>Each day covers about 3-5 chapters.
+The instructor will walk you through the material in each chapter.
+My instructor was very receptive to questions, which I made sure to ask a ton.
+It was not unordinary for me to ask a question, not quite understand the answer, and begin a whiteboard session to clarify.</p>
+<p>When reaching the end of chapter labs are presented.
+It is your choice whether to attempt the labs without guidance, look at the examples just for reference, or simply compile the examples and review the written code to understand how it works.</p>
+<p>I typically found myself starting a lab with no reference but opening the reference code to see which libraries should be included.
+The labs, in my opinion, were well thought out and focused on the chapter&rsquo;s concepts.
+Each lab allowed you to go about them in your own way, deciding whether to compile-time or run-time allocate dependencies, use a mutex or a spin lock, etc&hellip;
+I did not feel rushed during the labs and we generally had enough time to complete each one.</p>
+<p>I did have difficulty finding which libraries macros and functions were defined in when referenced in examples.
+We were introduced to several kernel cross referencing tools in later chapters which made this easier in the long run.</p>
+<h2 id="material">Material</h2>
+<p>I won&rsquo;t go too specific into the material of the course for reasons mentioned earlier.</p>
+<p>What can be said however is the material is up-to-date and is a rare corpus of real world examples of native kernel development.
+Techniques for writing syscalls without having to re-compile the kernel each time were examples of modern and practical knowledge presented to you.</p>
+<p>You will write kernel modules, compile your own kernel, work closely with critical data structures in the kernel, understand low level cpu details such as disabling and enable interupts, and write memory allocation procedures all from kernel space.</p>
+<h2 id="worth-it">Worth It?</h2>
+<p>For me, the course was completely worth it for one reason alone, the ability to <em>ask questions</em>.
+I&rsquo;ve read a lot of material on the kernel, hacked up a lot of toy syscalls and kernel modules, but there is no equivalent to simply being able to present a question to an expert and having it clarified.
+Often we simply have the wrong mental model about a topic or concept and a whiteboard explanation is invaluable.</p>
+<p>That being said, it becomes apparent that this course is <em>only</em> worth it if you <em>have</em> questions to ask.
+For this reason the course being labeled as “intermediate” is correct in my opinion.</p>
+<p>If you have not dabbled in at least a few of the topics in the course material, stirring up your own questions, you may feel this course is just a regurgitation of the written material.
+In order to get the most of this class you must know what you want from it, formulate questions ahead of time, don&rsquo;t be shy, and ask your instructor to whiteboard.</p>
+<p>My prior work in systems along with my current work software left me with a wealth of unresolved conceptions on the topic.
+I can honestly say a lot of these questions were resolved by this course.</p>
+<h2 id="tips">Tips</h2>
+<p>A few tips for the course if you decide to enroll.</p>
+<p>Use a VM.
+You will be potentially crashing your machine, tainting the kernel, causing leaks and deadlocks in kernel space.
+You probably don&rsquo;t want to do this all on your work or personal laptop.</p>
+<p>Download and compile the linux mainline kernel before the course begins.
+If you know how to compile a kernel already, do so and use ccache initially.
+Ccache will cache your object files making rebuilds much quicker allowing for more time for labs.
+I used these instructions: <a href="http://nickdesaulniers.github.io/blog/2018/06/02/speeding-up-linux-kernel-builds-with-ccache/">http://nickdesaulniers.github.io/blog/2018/06/02/speeding-up-linux-kernel-builds-with-ccache/</a></p>
+<p>Personally, I used sshfs to mount my VM&rsquo;s filesystem into my host&rsquo;s.
+This allowed me to use my Vim setup which has ctags, fzf searching, man lookup, etc&hellip; on my host machine while editing code on the VM.
+I would have two terminal windows open, one on my host editing code, and another with a ssh session in the VM.
+The ssh session in the VM is where I would compile the code.
+SSHFS is probably available in your distro&rsquo;s package manager and even available for MacOS as a FUSE.</p>
+]]></content>
+        </item>
+        
+        <item>
+            <title>Flashing QMK Firmware With The Help Of Docker</title>
+            <link>http://example.org/posts/qmk-docker/</link>
+            <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+            
+            <guid>http://example.org/posts/qmk-docker/</guid>
+            <description>Flashing QMK Firmware With The Help Of Docker</description>
+            <content type="html"><![CDATA[<p>DIY keyboard enthusiasts enjoy soldering switches, compiling firmware, and flashing their own keyboards.
+<a href="https://beta.docs.qmk.fm">QMK</a> provides open-source firmware and tooling to make this process transparent and easy.</p>
+<p>While working on my own keyboard project I ran into a road block.
+Fedora 32 is my operating system of choice and ships with GCC 10 by default.</p>
+<p>QMK requires AVR-GCC and GCC verion 8 to successfully flash a keyboard.
+By default the Fedora RPM repos do not provide a down-grade path and you&rsquo;d probably not want to do this anyway.</p>
+<p>Instead we can use a Docker container with the correct dependencies as our build environment.</p>
+<h2 id="gcc-8-container">GCC 8 Container</h2>
+<p>GCC containers are published on <a href="https://hub.docker.com/_/gcc">Docker Hub</a>.
+Looking over the tags reveal a <code>gcc:8</code> tag suitable for our build environment.</p>
+<h2 id="dockerfile">Dockerfile</h2>
+<p>The base <code>gcc:8</code> container will need additional dependencies and setup.</p>
+<p>The following Dockerfile demonstrates what is necessary.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">FROM gcc:8
+
+RUN apt-get update <span style="color:#f92672">&amp;&amp;</span> export PATH<span style="color:#f92672">=</span>$PATH:/root/.local/bin
+RUN apt install -y gcc-arm-none-eabi gcc-avr avrdude dfu-programmer dfu-util
+
+RUN curl https://bootstrap.pypa.io/get-pip.py -o /tmp/get-pip.py <span style="color:#f92672">&amp;&amp;</span> python3 /tmp/get-pip.py
+RUN python3 -m pip install qmk
+RUN qmk setup -y
+
+ENTRYPOINT /bin/bash
+</code></pre></div><p>We can build this container with the following command:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ docker build -t qmk:latest .
+</code></pre></div><p>The above command should be ran while your shell is in the same directory of the Dockerfile.</p>
+<h2 id="running-the-container">Running The Container</h2>
+<p>The plan is to build the firmware in our container, where the necessary dependencies exist, get the hex file on our workstation, and flash the usb keyboard outside of the container.</p>
+<p>In order to do this we must mount a directory from our workstation into the QMK container.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ mkdir ~/qmk-mnt
+$ docker run -it -v /home/ldelossa/qmk-mnt:/mnt quay.io/ldelossa/qmk:latest
+</code></pre></div><p>The above command creates a qmk-mnt folder in my home directory and bind mounts this into the container at /mnt.
+Any files moved or copied to /mnt in the container will be accessable at ~/qmk-mnt on the host workstation.</p>
+<h2 id="building-your-firmware">Building Your Firmware</h2>
+<p>Once inside the container we can build the firwmare and copy it to /mnt.</p>
+<p>I personally have an OLKB Preonic keyboard and will use the default keymap as an example.</p>
+<p>Inside the container run the following command:</p>
+<pre><code>qmk compile -kb preonic/rev1 -km default
+</code></pre><p>The above command compiles the default keymap and writes the resulting elf and hex binaries to:</p>
+<pre><code>./root/qmk_firmware/.build/
+</code></pre><p>For the preonic keyboard I am using we want to copy the &ldquo;.hex&rdquo; file to /mnt inside the container.
+This will make it accessable from ~/qmk-mnt on the host workstation.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ cp /root/qmk_firmware/.build/preonic_rev1_default.hex /mnt/
+</code></pre></div><h2 id="flashing-the-keyboard">Flashing The Keyboard</h2>
+<p>Now that the firmware exists on the host workstation its possible to flash our keyboard.</p>
+<p>The preonic keyboard will need &ldquo;dfu-programmer&rdquo; to write the hex file to the keyboard&rsquo;s micro-controller.
+Luckily this package is readily available on both Fedora and Ubuntu along with other distributions.</p>
+<p>With the keyboard plugged into the host and placed in &ldquo;flash&rdquo; mode the following commands are issued:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ sudo dfu-programmer atmega32u4 erase
+$ sudo dfu-programmer atmega32u4 flash ~/qmk-mnt/preonic_rev1_default.hex
+$ sudo dfu-programmer atmega32u4 reset
+</code></pre></div><p>The commands erase the current firmware, flash the new one, and restarts the keyboard.</p>
+<h2 id="building-a-keymap">Building A Keymap</h2>
+<p>From here you can use the QMK container to build your own keymaps.</p>
+<p>By copying the default keymaps to the /mnt folder inside the container its possible to edit the file on the host.
+Once edited simply copy it back to the original keymap folder and use QMK to compile it to a &ldquo;.hex&rdquo; file.</p>
+<p>For full details check out the <a href="https://beta.docs.qmk.fm/tutorial">getting started tutorial</a>.
+Moving the examples here into the demonstrated container workflow should be straight forward.</p>
+<h2 id="saving-your-container">Saving Your Container</h2>
+<p>It is possible to &ldquo;commit&rdquo; the build environment if any changes are made to QMK&rsquo;s configuration.</p>
+<p>To do this you can perform a Docker commit command:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ docker commit stoic_nash qmk:custom-config
+
+</code></pre></div><p>The command above will create a new container called <code>qmk:custom-config</code> based on the currently running container <code>stoic-nash</code>, a random name picked by Docker for our qmk container.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>With this short guide we make it possible to build QMK firmware in a self-contained environment.
+We remove any need to install or downgrade versions of GCC and other dependencies on your host machine.</p>
+]]></content>
+        </item>
+        
+    </channel>
+</rss>
