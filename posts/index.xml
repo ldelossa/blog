@@ -1,4 +1,4 @@
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on who.ldelossa.is</title><link>http://example.org/posts/</link><description>Recent content in Posts on who.ldelossa.is</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>&lt;a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0&lt;/a></copyright><lastBuildDate>Fri, 02 Apr 2021 00:00:00 +0000</lastBuildDate><atom:link href="http://example.org/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>From Zero To BPF Hero.</title><link>http://example.org/posts/bpf-zero-to-hero/</link><pubDate>Fri, 02 Apr 2021 00:00:00 +0000</pubDate><guid>http://example.org/posts/bpf-zero-to-hero/</guid><description>Learn how to run BPF programs with libbpf.</description><content type="html"><![CDATA[<p>BPF development in the Linux kernel is occurring at a
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom"><channel><title>Posts on who.ldelossa.is</title><link>http://who.ldelossa.is/posts/</link><description>Recent content in Posts on who.ldelossa.is</description><generator>Hugo -- gohugo.io</generator><language>en-us</language><copyright>&lt;a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank" rel="noopener">CC BY-NC 4.0&lt;/a></copyright><lastBuildDate>Fri, 02 Apr 2021 00:00:00 +0000</lastBuildDate><atom:link href="http://who.ldelossa.is/posts/index.xml" rel="self" type="application/rss+xml"/><item><title>From Zero To BPF Hero.</title><link>http://who.ldelossa.is/posts/bpf-zero-to-hero/</link><pubDate>Fri, 02 Apr 2021 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/bpf-zero-to-hero/</guid><description>Learn how to run BPF programs with libbpf.</description><content type="html"><![CDATA[<p>BPF development in the Linux kernel is occurring at a
 rapid pace.
 This makes finding up-to-date documentation and instructional
 material difficult.</p>
@@ -193,7 +193,7 @@ from BPF programs.</p>
 <p>[1] <a href="https://facebookmicrosites.github.io/bpf/blog/2020/02/20/bcc-to-libbpf-howto-guide.html">https://facebookmicrosites.github.io/bpf/blog/2020/02/20/bcc-to-libbpf-howto-guide.html</a></p>
 <p>[2] <a href="https://docs.cilium.io/en/stable/bpf/">https://docs.cilium.io/en/stable/bpf/</a></p>
 <p>[3] Calavera, D., &amp; Fontana, L. (2019). Linux Observability with BPF: Advanced Programming for Performance Analysis and Networking (1st ed.). O’Reilly Media.</p>
-]]></content></item><item><title>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</title><link>http://example.org/posts/absolute-minimum-cryptography/</link><pubDate>Tue, 22 Sep 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/absolute-minimum-cryptography/</guid><description>What every developer should know about crytography to make their lifes easier.</description><content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
+]]></content></item><item><title>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</title><link>http://who.ldelossa.is/posts/absolute-minimum-cryptography/</link><pubDate>Tue, 22 Sep 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/absolute-minimum-cryptography/</guid><description>What every developer should know about crytography to make their lifes easier.</description><content type="html"><![CDATA[<h2 id="introduction">Introduction</h2>
 <p>It&rsquo;s common to hear engineers muttering &ldquo;cryptography is scary&rdquo; or &ldquo;oh no its a cert problem.&rdquo;</p>
 <p>The topic is a dense one full of maths, mailing lists, and vulnerabilities which quite literally shock the world.
 It&rsquo;s understandable how a lot of engineers put learning about the topics to another day.</p>
@@ -457,7 +457,7 @@ This often leads to engineers avoiding the subject all together.</p>
 <p>This post makes it apparent that working with cryptography in a pragmatic sense has parallels with json or protobuf.
 At the end of the day, we describe a machine agnostic definition of an object (ASN.1), specify a way to encode this description (DER), and optionally modify the binary encoding to be network and email friendly (PEM).</p>
 <p>With this new perspective tasks dealing with certificates, ssl, authentication, and encryption should be demystified enough to tackle.</p>
-]]></content></item><item><title>Optimizing PGX Allocations in Golang with Pprof.</title><link>http://example.org/posts/allocation_optimization_in_go/</link><pubDate>Tue, 15 Sep 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/allocation_optimization_in_go/</guid><description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description><content type="html"><![CDATA[<p>Performance tuning is one of those programming rituals that gets oddly addicting.
+]]></content></item><item><title>Optimizing PGX Allocations in Golang with Pprof.</title><link>http://who.ldelossa.is/posts/allocation_optimization_in_go/</link><pubDate>Tue, 15 Sep 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/allocation_optimization_in_go/</guid><description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description><content type="html"><![CDATA[<p>Performance tuning is one of those programming rituals that gets oddly addicting.
 Seems like humans have a fundamental impulse to make a graph plot in their desired direction.
 This can be seen in a wide assortment of fields.
 Day traders watch metrics focused on their net earnings, nutritionists keep their calorie counts logged, and programmers focusing on performance obsess over memory allocations.</p>
@@ -614,7 +614,7 @@ The command tag tells us if any rows were affected by the exec. This effectively
 If you know the code you are writing will be in the &ldquo;hot-path&rdquo; its empowering to know what your allocation profile looks like.
 Learning the skills to performance tune is addicting and powerful but writing code that can be read and easily maintained should always be the first goal.
 That being said I do think every engineer should go down the rabbit hole at least once. Its a lot of fun.</p>
-]]></content></item><item><title>Git Worktree Flow</title><link>http://example.org/posts/git-worktree-flow/</link><pubDate>Thu, 06 Aug 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/git-worktree-flow/</guid><description>A workflow for keeping clean commit histories.</description><content type="html"><![CDATA[<p>What does death and Git have in common?</p>
+]]></content></item><item><title>Git Worktree Flow</title><link>http://who.ldelossa.is/posts/git-worktree-flow/</link><pubDate>Thu, 06 Aug 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/git-worktree-flow/</guid><description>A workflow for keeping clean commit histories.</description><content type="html"><![CDATA[<p>What does death and Git have in common?</p>
 <p>Just like death, Git is a fact of life for engineers writing code in 2021.</p>
 <p>Just like death, some people fear Git while others come to terms with it.</p>
 <p>It&rsquo;s safe to say there is no avoiding Git, like there is no avoiding death, may as well make it work for us.</p>
@@ -707,7 +707,7 @@ Successfully rebased and updated refs/heads/topic-branch.
 <p>Being a bit of an eccentric about commit history, a well defined workflow for keeping things neat is attractive to me.</p>
 <p>The use of worktrees, cross branch checkouts, and interactive rebases creates one that has worked well so far.</p>
 <p>I hope this post gets the gears turning for your own workflows.</p>
-]]></content></item><item><title>Sequential Consistency In Practice</title><link>http://example.org/posts/sequential-consistency-in-practice/</link><pubDate>Thu, 16 Jul 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/sequential-consistency-in-practice/</guid><description>Clarification on sequential consistency and distributed system</description><content type="html"><![CDATA[<p>If you are a software engineer today concurrency is everywhere.</p>
+]]></content></item><item><title>Sequential Consistency In Practice</title><link>http://who.ldelossa.is/posts/sequential-consistency-in-practice/</link><pubDate>Thu, 16 Jul 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/sequential-consistency-in-practice/</guid><description>Clarification on sequential consistency and distributed system</description><content type="html"><![CDATA[<p>If you are a software engineer today concurrency is everywhere.</p>
 <p>On the front-end it manifests as asynchronous web requests, the backend as service-to-service communication, and in systems programming as SMP and thread safety.</p>
 <p>With the ubiquity of programming with the 4th dimension in mind it&rsquo;s valuable to expand on the building blocks.</p>
 <p>One of these blocks comes in the form of consistency models: specific rules which govern concurrent access to shared resources.</p>
@@ -767,7 +767,7 @@ Proc-4 Observes: W<span style="color:#f92672">(</span>y<span style="color:#f9267
 <ul>
 <li>fix on valid sequential interleavings in first example.</li>
 </ul>
-]]></content></item><item><title>The Good With The Bad: Go's net/url.URL and JSON</title><link>http://example.org/posts/go-url-encoding/</link><pubDate>Sat, 11 Jul 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/go-url-encoding/</guid><description>Why seemingly inconvenient approaches lead to value in the long run.</description><content type="html"><![CDATA[<p>A rather common task presented itself while working on <a href="https://github.com/quay/clair">Clair</a> this week.</p>
+]]></content></item><item><title>The Good With The Bad: Go's net/url.URL and JSON</title><link>http://who.ldelossa.is/posts/go-url-encoding/</link><pubDate>Sat, 11 Jul 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/go-url-encoding/</guid><description>Why seemingly inconvenient approaches lead to value in the long run.</description><content type="html"><![CDATA[<p>A rather common task presented itself while working on <a href="https://github.com/quay/clair">Clair</a> this week.</p>
 <p>A URL needed to be generated in one service and communicated to another one.
 Like most would, JSON was to be used as the encoding and HTTP as the transport mechanism.
 A common task in most languages but a caveat exists in Go.</p>
@@ -846,7 +846,7 @@ The way chosen in Clair is as follows.</p>
 <p>While I sympathize, and to a degree agree, I also see a valuable principal being adhered to.</p>
 <p>Many languages suffer from compatibility issues which not only cripple productivity but also lose real money when downtime incurs.</p>
 <p>Knowing the Go team is making full effort to avoid these scenarios is a good thing.</p>
-]]></content></item><item><title>Building A Home Lab With Podman - Pt2</title><link>http://example.org/posts/home-network-pt2/</link><pubDate>Fri, 03 Jul 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/home-network-pt2/</guid><description>Application routing is introduced into the home lab</description><content type="html"><![CDATA[<p>In <a href="/blog/home-network-pt1">Part 1</a> of this series I explain the desire to create a minimal home network running on containers, the stack being used to accomplish this, and how name resolution will work.</p>
+]]></content></item><item><title>Building A Home Lab With Podman - Pt2</title><link>http://who.ldelossa.is/posts/home-network-pt2/</link><pubDate>Fri, 03 Jul 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/home-network-pt2/</guid><description>Application routing is introduced into the home lab</description><content type="html"><![CDATA[<p>In <a href="/blog/home-network-pt1">Part 1</a> of this series I explain the desire to create a minimal home network running on containers, the stack being used to accomplish this, and how name resolution will work.</p>
 <p>This post will cover how services running as containers are routed.</p>
 <h2 id="application-routing">Application Routing</h2>
 <p>While it&rsquo;s possible to port-forward every application container running on &ldquo;ct-host&rdquo; an issue exists with this approach.
@@ -958,7 +958,7 @@ The configuration files are also mapped from the host allowing for easy maintena
 <li>Containers can be accessed by a hostname.</li>
 <li>Hostnames can be redirected to containers exposed directly on &ldquo;ct-host&rdquo;.</li>
 </ul>
-]]></content></item><item><title>Building A Home Lab With Podman - Pt1</title><link>http://example.org/posts/home-network-pt1/</link><pubDate>Wed, 01 Jul 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/home-network-pt1/</guid><description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description><content type="html"><![CDATA[<p><em>Checkout <a href="/blog/posts/home-network-pt2.post">Part 2</a> For Application Routing</em></p>
+]]></content></item><item><title>Building A Home Lab With Podman - Pt1</title><link>http://who.ldelossa.is/posts/home-network-pt1/</link><pubDate>Wed, 01 Jul 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/home-network-pt1/</guid><description>An example utilizing pprof for some impressive allocation reductions in the PGX sql library.</description><content type="html"><![CDATA[<p><em>Checkout <a href="/blog/posts/home-network-pt2.post">Part 2</a> For Application Routing</em></p>
 <p>It&rsquo;s common to set up a network, a few virtual hosts, and fundamental network services at home as a way to learn how these technologies interact.</p>
 <p>While moving apartments in Brooklyn I discovered a Thinkpad laptop just collecting dust.
 The laptop had good specs and a 1TB ssd.
@@ -1070,7 +1070,7 @@ However, devices can &ldquo;opt-in&rdquo; by setting their DNS server to <code>1
 By utilizing Podman and CoreDNS a solution for name resolution was devised.
 Mapping configuration files from the host into containers provides a fast and dynamic way to update DNS in the lab.</p>
 <p>In <a href="/blog/posts/home-network-pt2.post">Part 2</a> a mechanism for routing hostnames to specific containerized services is introduced.</p>
-]]></content></item><item><title>Linux Foundation's LFD420 Review</title><link>http://example.org/posts/lfd420-review/</link><pubDate>Thu, 25 Jun 2020 00:00:00 +0000</pubDate><guid>http://example.org/posts/lfd420-review/</guid><description>My review of the Linux Foundation&amp;rsquo;s course Linux Kernel Internals and Development (LFD420)</description><content type="html"><![CDATA[<p>The low level details of operating systems are fascinating but often hard to acquire.
+]]></content></item><item><title>Linux Foundation's LFD420 Review</title><link>http://who.ldelossa.is/posts/lfd420-review/</link><pubDate>Thu, 25 Jun 2020 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/lfd420-review/</guid><description>My review of the Linux Foundation&amp;rsquo;s course Linux Kernel Internals and Development (LFD420)</description><content type="html"><![CDATA[<p>The low level details of operating systems are fascinating but often hard to acquire.
 Books on the topic usually cover only user space systems programming leaving out kernel native development all together.
 When material is discovered on the topic it&rsquo;s often out of date as the kernel moves quickly in development.</p>
 <p>Seeking a deeper understanding I asked my current employer Red Hat if they would assist.
@@ -1146,7 +1146,7 @@ This allowed me to use my Vim setup which has ctags, fzf searching, man lookup, 
 I would have two terminal windows open, one on my host editing code, and another with a ssh session in the VM.
 The ssh session in the VM is where I would compile the code.
 SSHFS is probably available in your distro&rsquo;s package manager and even available for MacOS as a FUSE.</p>
-]]></content></item><item><title>Flashing QMK Firmware With The Help Of Docker</title><link>http://example.org/posts/qmk-docker/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>http://example.org/posts/qmk-docker/</guid><description>Flashing QMK Firmware With The Help Of Docker</description><content type="html"><![CDATA[<p>DIY keyboard enthusiasts enjoy soldering switches, compiling firmware, and flashing their own keyboards.
+]]></content></item><item><title>Flashing QMK Firmware With The Help Of Docker</title><link>http://who.ldelossa.is/posts/qmk-docker/</link><pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate><guid>http://who.ldelossa.is/posts/qmk-docker/</guid><description>Flashing QMK Firmware With The Help Of Docker</description><content type="html"><![CDATA[<p>DIY keyboard enthusiasts enjoy soldering switches, compiling firmware, and flashing their own keyboards.
 <a href="https://beta.docs.qmk.fm">QMK</a> provides open-source firmware and tooling to make this process transparent and easy.</p>
 <p>While working on my own keyboard project I ran into a road block.
 Fedora 32 is my operating system of choice and ships with GCC 10 by default.</p>
