@@ -217,13 +217,13 @@ latest and greatest BPF programs are installed.</p>
 that has replaced other tools such as BCC.</p>
 <p>Build and install this library by changing directories to it
 and running:</p>
-<pre><code>$ make
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make
 $ make install
-</code></pre><p>As a spot check, confirm <code>pkg-config</code> can locate this library:</p>
-<pre><code>$ pkg-config --exists libbpf
+</code></pre></div><p>As a spot check, confirm <code>pkg-config</code> can locate this library:</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ pkg-config --exists libbpf
 $ $?
-$ 0
-</code></pre><p>Our linker will be able to find the BPF headers fine now.</p>
+$ <span style="color:#ae81ff">0</span>
+</code></pre></div><p>Our linker will be able to find the BPF headers fine now.</p>
 <h2 id="hello-world">Hello World</h2>
 <p>The following BPF program is stolen from the book
 &ldquo;Linux Observability with BPF&rdquo; book, but modified it to work with the
@@ -236,9 +236,9 @@ build and run a BPF program with libbpf.</p>
 </span><span style="color:#75715e"></span>
 SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
 <span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
-<span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
-bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
-<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
 }
 
 <span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
@@ -269,22 +269,22 @@ file was exposed in the sys virtual directory.</p>
 file mentioned above.</p>
 <p>To build the tool &lsquo;cd&rsquo; into the source directory and
 do a quick:</p>
-<pre><code>$ make 
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make 
 $ make install
-</code></pre><p>This should install the tool to <code>/usr/local/sbin/bpftool</code> by
+</code></pre></div><p>This should install the tool to <code>/usr/local/sbin/bpftool</code> by
 default.</p>
 <p>You can generate the header file, cononically named &ldquo;vmlinux.h&rdquo;
 by issuing the following command:</p>
-<pre><code>bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
-</code></pre><p>We can now link this header into our hello_world.c program.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
+</code></pre></div><p>We can now link this header into our hello_world.c program.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;../vmlinux.h&#34; /* all kernel types */</span><span style="color:#75715e">
 </span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
 </span><span style="color:#75715e"></span>
 SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
 <span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
-<span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
-bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
-<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
 }
 
 <span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
@@ -544,7 +544,7 @@ from BPF programs.</p>
 
 
 
-<script type="text/javascript" src="/bundle.min.af6e96aee0d483c1feafceab5bbf6f14bed8e7d8ed8219da176093d11a844c8c32a7d366d97e3f87aa508144263c04a8ee1c8dd1fe8c27c54aab52b114d25363.js" integrity="sha512-r26WruDUg8H&#43;r86rW79vFL7Y59jtghnaF2CT0RqETIwyp9Nm2X4/h6pQgUQmPASo7hyN0f6MJ8VKq1KxFNJTYw=="></script>
+<script type="text/javascript" src="/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js" integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
 
 
 

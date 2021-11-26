@@ -342,10 +342,10 @@ If you are interested in further details on JWT and JWE I suggest checking out t
 This is referred to as an &ldquo;encoding&rdquo; of ASN.1 types.</p>
 <p>For example an ASN.1 definition may describe a data structure comprised of two integer fields, an array of integers field, and a string field in a similar fashion as a structure in Go.</p>
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Obj</span> <span style="color:#66d9ef">struct</span> {
-<span style="color:#a6e22e">X</span> <span style="color:#66d9ef">int</span>
-<span style="color:#a6e22e">Y</span> <span style="color:#66d9ef">int</span>
-<span style="color:#a6e22e">Values</span> []<span style="color:#66d9ef">int</span>
-<span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
+    <span style="color:#a6e22e">X</span> <span style="color:#66d9ef">int</span>
+    <span style="color:#a6e22e">Y</span> <span style="color:#66d9ef">int</span>
+    <span style="color:#a6e22e">Values</span> []<span style="color:#66d9ef">int</span>
+    <span style="color:#a6e22e">Name</span> <span style="color:#66d9ef">string</span>
 }
 </code></pre></div><p>Just as we can take any Go struct with public members and encode it into JSON, ASN.1 provides a common language to define structures and encode it into several forms.</p>
 <p>ASN.1 is heavily used in the telecommunication industry and remains popular due to its extensibility.</p>
@@ -359,7 +359,7 @@ It can be convenient for applications to work with DER as any penalty for marsha
 Since DER can encode several ASN.1 formats and PEM simply holds a base64 representation of this data, PEM can hold multiple ASN.1 described formats transitively.</p>
 <p>PEM is the encoding public keys, private keys, and certificates are typically transported in, as they are human readable and can be instantly recognized.</p>
 <p>A PEM private key follows:</p>
-<pre><code>-----BEGIN RSA PRIVATE KEY-----
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">-----BEGIN RSA PRIVATE KEY-----
 MIIEpQIBAAKCAQEA3Tz2mr7SZiAMfQyuvBjM9Oi..Z1BjP5CE/Wm/Rr500P
 RK+Lh9x5eJPo5CAZ3/ANBE0sTK0ZsDGMak2m1g7..3VHqIxFTz0Ta1d+NAj
 wnLe4nOb7/eEJbDPkk05ShhBrJGBKKxb8n104o/..PdzbFMIyNjJzBM2o5y
@@ -384,18 +384,18 @@ uv9bT4Cj+lXRS+gdKHK+SH7J3x2CRHVS+WH/SVC..DxuybvebDoT0TkKiCj
 BWQaGzCaJqZa+POHK0klvS+9ln0/6k539p95tfX..X4TCzbVG6+gJiX0ysz
 Yfehn5MCgYEAkMiKuWHCsVyCab3RUf6XA9gd3qY..fCTIGtS1tR5PgFIV+G
 engiVoWc/hkj8SBHZz1n1xLN7KDf8ySU06MDggB..hJ+gXJKy+gf3mF5Kmj
-DtkpjGHQzPF6vOe907y5NQLvVFGXUq/FIJZxB8k..fJdHEm2M4=
+DtkpjGHQzPF6vOe907y5NQLvVFGXUq/FIJZxB8k..fJdHEm2M4<span style="color:#f92672">=</span>
 -----END RSA PRIVATE KEY-----
-</code></pre><p>Because the base64 value can be several ASN.1 descriptions the PEM encoding wraps the base64 data with some header information.
+</code></pre></div><p>Because the base64 value can be several ASN.1 descriptions the PEM encoding wraps the base64 data with some header information.
 This is helpful for libraries which parse and decode these files.</p>
 <h4 id="pkcs8-and-pkix">PKCS8 and PKIX</h4>
 <p>PKCS8 and PKIX are formats specifically utilized for encoding a private key and a public key respectively.
 The former is part of a larger set of <a href="https://en.wikipedia.org/wiki/PKCS">PKCS protocols</a> defined by the RSA organization.
 The latter is defined by the Public Key Infrastructure working in <a href="https://tools.ietf.org/html/rfc5280#section-4.1">rfc-5280 section4.1</a>:</p>
-<pre><code>SubjectPublicKeyInfo  ::=  SEQUENCE  {
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">SubjectPublicKeyInfo  ::<span style="color:#f92672">=</span>  SEQUENCE  <span style="color:#f92672">{</span>
    algorithm            AlgorithmIdentifier,
-   subjectPublicKey     BIT STRING  }
-</code></pre><p>Both these formats are expressed in ASN.1 notation, therefore they can be DER encoded and subsequently PEM encoded.</p>
+   subjectPublicKey     BIT STRING  <span style="color:#f92672">}</span>
+</code></pre></div><p>Both these formats are expressed in ASN.1 notation, therefore they can be DER encoded and subsequently PEM encoded.</p>
 <p>These formats support password protection utilizing symmetric keys where both DER and PEM do not.</p>
 <h3 id="rsa-keys-and-certificates">RSA Keys And Certificates</h3>
 <p>RSA keys are often used with x.509 certificates. As a reminder certificates are used to prove authenticity.</p>
@@ -413,18 +413,18 @@ The latter is defined by the Public Key Infrastructure working in <a href="https
 <div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">public</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">private</span>.<span style="color:#a6e22e">Public</span>()
 </code></pre></div><p>Both <code>private</code> and <code>public</code> variables hold a language specific key object with fields specific to the RSA algorithm.</p>
 <p>We want to transport the public key, both PKCS1 and PKIX are formats that can accomplish this. Since we covered PKIX in this post lets use that format.</p>
-<pre><code>der, err := x509.MarshalPKIXPublicKey(public)
-</code></pre><p>This marshal function will take the language specific public key object, marshall it into the ASN.1 PKIX description, and then encode this ASN.1 description into binary.
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">der</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">x509</span>.<span style="color:#a6e22e">MarshalPKIXPublicKey</span>(<span style="color:#a6e22e">public</span>)
+</code></pre></div><p>This marshal function will take the language specific public key object, marshall it into the ASN.1 PKIX description, and then encode this ASN.1 description into binary.
 The <code>der</code> variable holds a byte slice containing the DER encoding of the private key.</p>
 <p>If the goal is to simply store a public key in a database the binary DER encoding fulfills this use case.
 However, if the key must transit a transport that is not byte safe such as a network or email system we must PEM encoded the byte slice.</p>
 <p>In order to PEM encode our DER encoded PKIX public key we need to create a PEM block.</p>
-<pre><code>type Block struct {
-  Type    string            // The type, taken from the preamble (i.e. &quot;RSA PRIVATE KEY&quot;).
-  Headers map[string]string // Optional headers.
-  Bytes   []byte            // The decoded bytes of the contents. Typically a DER encoded ASN.1 structure.
-}
-</code></pre><p>The structure defines a few fields.</p>
+<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Block</span> <span style="color:#66d9ef">struct</span> {
+  <span style="color:#a6e22e">Type</span>    <span style="color:#66d9ef">string</span>            <span style="color:#75715e">// The type, taken from the preamble (i.e. &#34;RSA PRIVATE KEY&#34;).
+</span><span style="color:#75715e"></span>  <span style="color:#a6e22e">Headers</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">string</span> <span style="color:#75715e">// Optional headers.
+</span><span style="color:#75715e"></span>  <span style="color:#a6e22e">Bytes</span>   []<span style="color:#66d9ef">byte</span>            <span style="color:#75715e">// The decoded bytes of the contents. Typically a DER encoded ASN.1 structure.
+</span><span style="color:#75715e"></span>}
+</code></pre></div><p>The structure defines a few fields.</p>
 <p><code>Type</code> is ASCII text which defines the binary data being encoded.
 For a PKIX public key this should be &ldquo;PUBLIC KEY&rdquo;.</p>
 <p>Headers allow for further details about the binary we are encoding, we will not use this.</p>
@@ -638,7 +638,7 @@ At the end of the day, we describe a machine agnostic definition of an object (A
 
 
 
-<script type="text/javascript" src="/bundle.min.af6e96aee0d483c1feafceab5bbf6f14bed8e7d8ed8219da176093d11a844c8c32a7d366d97e3f87aa508144263c04a8ee1c8dd1fe8c27c54aab52b114d25363.js" integrity="sha512-r26WruDUg8H&#43;r86rW79vFL7Y59jtghnaF2CT0RqETIwyp9Nm2X4/h6pQgUQmPASo7hyN0f6MJ8VKq1KxFNJTYw=="></script>
+<script type="text/javascript" src="/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js" integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
 
 
 

@@ -242,17 +242,18 @@ These service files can be used to start the container on boot, restart it on fa
 <p>configuration:</p>
 <pre><code class="language-console" data-lang="console">$ cat Corefile
 .:53 {
-cache 10
-forward . 8.8.8.8 9.9.9.9
-log
-errors
+    cache 10
+    forward . 8.8.8.8 9.9.9.9
+    log
+    errors
 }
 
 ldelossa.net {
-cache 10
-hosts /etc/coredns/hosts {
+    cache 10
+    hosts /etc/coredns/hosts {
+    }
 }
-}
+
 $ cat hosts
 192.168.185.10 traefik.ldelossa.net
 192.168.185.10 ct-host.ldelossa.net
@@ -466,7 +467,7 @@ Mapping configuration files from the host into containers provides a fast and dy
 
 
 
-<script type="text/javascript" src="/bundle.min.af6e96aee0d483c1feafceab5bbf6f14bed8e7d8ed8219da176093d11a844c8c32a7d366d97e3f87aa508144263c04a8ee1c8dd1fe8c27c54aab52b114d25363.js" integrity="sha512-r26WruDUg8H&#43;r86rW79vFL7Y59jtghnaF2CT0RqETIwyp9Nm2X4/h6pQgUQmPASo7hyN0f6MJ8VKq1KxFNJTYw=="></script>
+<script type="text/javascript" src="/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js" integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
 
 
 
