@@ -24,6 +24,8 @@ theme = "hello-friend-ng"
   # Enable sharing buttons, if you like
   enableSharingButtons = true
 
+  enableThemeToggle = true
+
   # Metadata mostly used in document's head
   description = ""
   keywords = "linux, technology, systems, networking, programming, golang, software"
