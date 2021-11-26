@@ -1,4 +1,4 @@
-baseURL = "http://who.ldelossa.is/"
+baseURL = "https://who.ldelossa.is/"
 languageCode = "en-us"
 title = "who.ldelossa.is"
 theme = "hello-friend-ng"
