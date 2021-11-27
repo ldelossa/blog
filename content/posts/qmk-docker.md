@@ -1,7 +1,7 @@
 ---
 title: Flashing QMK Firmware With The Help Of Docker
 summary: Flashing QMK Firmware With The Help Of Docker
-date: 2020-10-5
+date: 2020-10-05
 toc: true
 ---
 
