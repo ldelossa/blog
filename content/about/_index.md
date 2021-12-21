@@ -25,11 +25,9 @@ You can see some of my talks about Clair here:
 
 [Inside the Indexer](https://youtu.be/pEAU6E1rZWo)
 
-## [calltree.nvim](https://github.com/ldelossa/calltree.nvim)
+## [litee.nvim](https://github.com/ldelossa/litee.nvim)
 
 A neovim plugin which brings over some features from VSCode that were missing.
-
-The main focus is implementing a call-hierarchy GUI which Neovim does not include by default.
 
 ## [sway-fzfify](https://github.com/ldelossa/sway-fzfify)
 
@@ -37,3 +35,9 @@ A set of scripts I use daily in coordination with the Sway window manager.
 
 Uses FZF to accomplish most Sway navigation needs such as creating and moving
 workspaces, selecting marks, launching linux desktop apps, etc...
+
+## [vimdark](https://github.com/ldelossa/vimdark)
+
+A minimal vim theme based on Chrome's dark reader.
+
+Offers a light theme similar to PaperColor as well.
