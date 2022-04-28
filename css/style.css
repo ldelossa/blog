@@ -23,6 +23,12 @@ body {
 }
 .article-meta, footer { text-align: center; }
 .title { font-size: 1.1em; }
+.profile-img-div {
+    text-align: center;
+}
+.profile-img { 
+    border-radius: 50px; 
+}
 footer a { text-decoration: none; }
 hr {
   border-style: dashed;
