@@ -1,345 +1,122 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="ie=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=author content>
-<meta name=description content="An example utilizing pprof for some impressive allocation reductions in the PGX sql library.">
-<meta name=keywords content>
-<meta name=robots content="noodp">
-<meta name=theme-color content>
-<link rel=canonical href=https://who.ldelossa.is/posts/allocation_optimization_in_go/>
-<title>
-Optimizing PGX Allocations in Golang with Pprof. :: who.ldelossa.is — a.programming.blog
-</title>
-<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=/main.2fe95403bfa6bf6df3d4da1d77c95594166f95fed0e63c24056ce34a95cd8595.css>
-<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
-<link rel=manifest href=/site.webmanifest>
-<link rel=mask-icon href=/safari-pinned-tab.svg color>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta name=msapplication-TileColor content>
-<meta name=theme-color content>
-<meta itemprop=name content="Optimizing PGX Allocations in Golang with Pprof.">
-<meta itemprop=description content="An example utilizing pprof for some impressive allocation reductions in the PGX sql library."><meta itemprop=datePublished content="2020-09-15T00:00:00+00:00">
-<meta itemprop=dateModified content="2020-09-15T00:00:00+00:00">
-<meta itemprop=wordCount content="1106"><meta itemprop=image content="https://who.ldelossa.is/">
-<meta itemprop=keywords content>
-<meta name=twitter:card content="summary_large_image">
-<meta name=twitter:image content="https://who.ldelossa.is/">
-<meta name=twitter:title content="Optimizing PGX Allocations in Golang with Pprof.">
-<meta name=twitter:description content="An example utilizing pprof for some impressive allocation reductions in the PGX sql library.">
-<meta property="og:title" content="Optimizing PGX Allocations in Golang with Pprof.">
-<meta property="og:description" content="An example utilizing pprof for some impressive allocation reductions in the PGX sql library.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://who.ldelossa.is/posts/allocation_optimization_in_go/"><meta property="og:image" content="https://who.ldelossa.is/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-09-15T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-09-15T00:00:00+00:00"><meta property="og:site_name" content="who.ldelossa.is">
-<meta property="article:published_time" content="2020-09-15 00:00:00 +0000 UTC">
-</head>
-<body>
-<div class=container>
-<header class=header>
-<span class=header__inner>
-<a href=/ style=text-decoration:none>
-<div class=logo>
-<span class=logo__mark>></span>
-<span class=logo__text>nc who.ldelossa.is 80</span>
-<span class=logo__cursor>
-</span>
-</div>
-</a>
-<span class=header__right>
-<nav class=menu>
-<ul class=menu__inner><li><a href=/about>About</a></li><li><a href=/posts>Blog</a></li>
-</ul>
-</nav>
-<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-</span>
-<span class="theme-toggle not-selectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span>
-</span>
-</span>
-</header>
-<div class=content>
-<main class=post>
-<div class=post-info>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-6 minutes
-</p>
-</div>
-<article>
-<h1 class=post-title>
-<a href=https://who.ldelossa.is/posts/allocation_optimization_in_go/>Optimizing PGX Allocations in Golang with Pprof.</a>
-</h1>
-<hr>
-<aside id=toc>
-<div class=toc-title>Table of Contents</div>
-<nav id=TableOfContents>
-<ul>
-<li><a href=#the-code>The code</a></li>
-<li><a href=#reducing-channel-allocations>Reducing channel allocations</a></li>
-<li><a href=#a-pgx-trick>A PGX Trick</a></li>
-<li><a href=#disclaimer-on-optimization>Disclaimer on optimization</a></li>
-</ul>
-</nav>
-</aside>
-<hr>
-<div class=post-content>
-<p>Performance tuning is one of those programming rituals that gets oddly addicting.
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Optimizing PGX Allocations in Golang with Pprof. | a.programming.blog</title><link rel=stylesheet href=/who.ldelossa.is/css/style.css><link rel=stylesheet href=/who.ldelossa.is/css/fonts.css></head><body><nav><ul class=menu><li><a href=/who.ldelossa.is/about/>About</a></li><li><a href=/who.ldelossa.is/posts/>Posts</a></li></ul><hr></nav><div class=article-meta><h1><span class=title>Optimizing PGX Allocations in Golang with Pprof.</span></h1><h2 class=date>2020/09/15</h2></div><main><p>Performance tuning is one of those programming rituals that gets oddly addicting.
 Seems like humans have a fundamental impulse to make a graph plot in their desired direction.
 This can be seen in a wide assortment of fields.
-Day traders watch metrics focused on their net earnings, nutritionists keep their calorie counts logged, and programmers focusing on performance obsess over memory allocations.</p>
-<p>After spending sometime obessing myself I found myself making large allocation improvements with some tricks in the popular <a href=https://github.com/jackc/pgx>PGX</a> library.</p>
-<p>I&rsquo;d like to shout out <em>Kale Blanekship</em> and <em>Eric Chlebek</em> from the performance channel in #gophers slack. They provided the clues used in this post.</p>
-<h2 id=the-code>The code</h2>
-<p>The code that&rsquo;s being profiled is a new distributed lock implementation for <a href=https://github.com/quay/claircore/>ClairCore</a>.
+Day traders watch metrics focused on their net earnings, nutritionists keep their calorie counts logged, and programmers focusing on performance obsess over memory allocations.</p><p>After spending sometime obessing myself I found myself making large allocation improvements with some tricks in the popular <a href=https://github.com/jackc/pgx>PGX</a> library.</p><p>I&rsquo;d like to shout out <em>Kale Blanekship</em> and <em>Eric Chlebek</em> from the performance channel in #gophers slack. They provided the clues used in this post.</p><h2 id=the-code>The code</h2><p>The code that&rsquo;s being profiled is a new distributed lock implementation for <a href=https://github.com/quay/claircore/>ClairCore</a>.
 Postgres is the only required infrastructure for ClairCore by design.
-While it&rsquo;s not the best mechanim for a distributed lock, <a href=https://www.postgresql.org/docs/9.1/explicit-locking.html>postgres advisory locks</a> can be utilized to get <em>mostly</em> there.</p>
-<p>You can view the distlock implementation <a href=https://github.com/ldelossa/distlock>here</a></p>
-<h2 id=reducing-channel-allocations>Reducing channel allocations</h2>
-<p>Our distlock implementation utilizes the request/response channel-of-channel pattern.
+While it&rsquo;s not the best mechanim for a distributed lock, <a href=https://www.postgresql.org/docs/9.1/explicit-locking.html>postgres advisory locks</a> can be utilized to get <em>mostly</em> there.</p><p>You can view the distlock implementation <a href=https://github.com/ldelossa/distlock>here</a></p><h2 id=reducing-channel-allocations>Reducing channel allocations</h2><p>Our distlock implementation utilizes the request/response channel-of-channel pattern.
 A request object with a response channel is pushed onto a request channel.
-When the receiver gets the request it writes to the response channel, unblocking any client listening.</p>
-<p>This pattern is useful but will also alloc a lot of channels resulting in bloating the heap.</p>
-<p>To demonstrate this a benchmark will be taken that profiles lock acquisition and lock return.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>$ go test -benchtime <span style=color:#e6db74>&#34;1m&#34;</span>  -run xxx -bench . -memprofile memprofile.out -cpuprofile cpuprofile.out
-</code></pre></div><p>The command above runs a 1 minute benchmark profiling both memory and cpu.</p>
-<p>Next lets start an interactive pprof session over the memory profile and drill into the function where the channel allocations are occuring.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>$ go tool pprof distlock.test memprofile.out
-
-<span style=color:#f92672>(</span>pprof<span style=color:#f92672>)</span> list <span style=color:#ae81ff>\.</span>Lock
-Total: 194.36MB
-ROUTINE <span style=color:#f92672>========================</span> github.com/ldelossa/distlock.<span style=color:#f92672>(</span>*Manager<span style=color:#f92672>)</span>.Lock in /home/louis/git/go/distlock/manager.go
-    20MB       20MB <span style=color:#f92672>(</span>flat, cum<span style=color:#f92672>)</span> 10.29% of Total
-       .          .     78: <span style=color:#f92672>}</span>
-       .          .     79:
-       .          .     80: req :<span style=color:#f92672>=</span> request<span style=color:#f92672>{</span>
-       .          .     81:     t:        Lock,
-       .          .     82:	    key:      key,
- 13.50MB    13.50MB     83:		respChan: make<span style=color:#f92672>(</span>chan response<span style=color:#f92672>)</span>,
-       .          .     84:	<span style=color:#f92672>}</span>
-       .          .     85:
-       .          .     86:	// guaranteed to <span style=color:#66d9ef>return</span>
-       .          .     87:	resp :<span style=color:#f92672>=</span> m.g.request<span style=color:#f92672>(</span>req<span style=color:#f92672>)</span>
-       .          .     88:
-       .          .     89:	<span style=color:#66d9ef>if</span> !resp.ok <span style=color:#f92672>{</span>
-       .          .     90:		<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{}</span>
-       .          .     91:	<span style=color:#f92672>}</span>
-       .          .     92:
-       .          .     93:	m.propagateCancel<span style=color:#f92672>(</span>ctx, resp.ctx, key<span style=color:#f92672>)</span>
-       .          .     94:
-  6.50MB     6.50MB     95:	<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-       .          .     96:		m.unlock<span style=color:#f92672>(</span>key<span style=color:#f92672>)</span>
-       .          .     97:	<span style=color:#f92672>}</span>
-       .          .     98:<span style=color:#f92672>}</span>
-       .          .     99:
-       .          .    100:func <span style=color:#f92672>(</span>m *Manager<span style=color:#f92672>)</span> propagateCancel<span style=color:#f92672>(</span>parent context.Context, child context.Context, key string<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-</code></pre></div><p>Above illustrates 13.50MB of heap memory is spent on allocating request objects and their response channels.</p>
-<p>We can introduce an object pool to promote the reuse of these channels.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>reqPool</span> <span style=color:#66d9ef>struct</span> {
-	<span style=color:#a6e22e>c</span> <span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>request</span>
-}
-
-<span style=color:#66d9ef>func</span> <span style=color:#a6e22e>NewReqPool</span>(<span style=color:#a6e22e>seed</span> <span style=color:#66d9ef>int</span>) <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span> {
-	<span style=color:#a6e22e>c</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>request</span>, <span style=color:#a6e22e>seed</span><span style=color:#f92672>*</span><span style=color:#ae81ff>2</span>)
-	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#a6e22e>seed</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
-		<span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>request</span>{<span style=color:#a6e22e>respChan</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>response</span>)}
-		<span style=color:#66d9ef>select</span> {
-		<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>c</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>r</span>:
-		<span style=color:#66d9ef>default</span>:
-
-		}
-	}
-	<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>reqPool</span>{<span style=color:#a6e22e>c</span>}
-}
-
-<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>p</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span>) <span style=color:#a6e22e>Get</span>() <span style=color:#a6e22e>request</span> {
-	<span style=color:#66d9ef>select</span> {
-	<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>p</span>.<span style=color:#a6e22e>c</span>:
-		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>r</span>
-	<span style=color:#66d9ef>default</span>:
-		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>request</span>{<span style=color:#a6e22e>respChan</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>response</span>)}
-	}
-}
-
-<span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>p</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span>) <span style=color:#a6e22e>Put</span>(<span style=color:#a6e22e>r</span> <span style=color:#a6e22e>request</span>) {
-	<span style=color:#66d9ef>select</span> {
-	<span style=color:#66d9ef>case</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>respChan</span>:
-	<span style=color:#66d9ef>default</span>:
-	}
-	<span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>key</span> = <span style=color:#e6db74>&#34;&#34;</span>
-	<span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>t</span> = <span style=color:#a6e22e>Invalid</span>
-	<span style=color:#66d9ef>select</span> {
-	<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>p</span>.<span style=color:#a6e22e>c</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>r</span>:
-	}
-}
-</code></pre></div><p>The above illustrates a simple channel implemented pool.
+When the receiver gets the request it writes to the response channel, unblocking any client listening.</p><p>This pattern is useful but will also alloc a lot of channels resulting in bloating the heap.</p><p>To demonstrate this a benchmark will be taken that profiles lock acquisition and lock return.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go test -benchtime <span style=color:#e6db74>&#34;1m&#34;</span>  -run xxx -bench . -memprofile memprofile.out -cpuprofile cpuprofile.out
+</span></span></code></pre></div><p>The command above runs a 1 minute benchmark profiling both memory and cpu.</p><p>Next lets start an interactive pprof session over the memory profile and drill into the function where the channel allocations are occuring.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>$ go tool pprof distlock.test memprofile.out
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#f92672>(</span>pprof<span style=color:#f92672>)</span> list <span style=color:#ae81ff>\.</span>Lock
+</span></span><span style=display:flex><span>Total: 194.36MB
+</span></span><span style=display:flex><span>ROUTINE <span style=color:#f92672>========================</span> github.com/ldelossa/distlock.<span style=color:#f92672>(</span>*Manager<span style=color:#f92672>)</span>.Lock in /home/louis/git/go/distlock/manager.go
+</span></span><span style=display:flex><span>    20MB       20MB <span style=color:#f92672>(</span>flat, cum<span style=color:#f92672>)</span> 10.29% of Total
+</span></span><span style=display:flex><span>       .          .     78: <span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     79:
+</span></span><span style=display:flex><span>       .          .     80: req :<span style=color:#f92672>=</span> request<span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>       .          .     81:     t:        Lock,
+</span></span><span style=display:flex><span>       .          .     82:	    key:      key,
+</span></span><span style=display:flex><span> 13.50MB    13.50MB     83:		respChan: make<span style=color:#f92672>(</span>chan response<span style=color:#f92672>)</span>,
+</span></span><span style=display:flex><span>       .          .     84:	<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     85:
+</span></span><span style=display:flex><span>       .          .     86:	// guaranteed to <span style=color:#66d9ef>return</span>
+</span></span><span style=display:flex><span>       .          .     87:	resp :<span style=color:#f92672>=</span> m.g.request<span style=color:#f92672>(</span>req<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       .          .     88:
+</span></span><span style=display:flex><span>       .          .     89:	<span style=color:#66d9ef>if</span> !resp.ok <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>       .          .     90:		<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{}</span>
+</span></span><span style=display:flex><span>       .          .     91:	<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     92:
+</span></span><span style=display:flex><span>       .          .     93:	m.propagateCancel<span style=color:#f92672>(</span>ctx, resp.ctx, key<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       .          .     94:
+</span></span><span style=display:flex><span>  6.50MB     6.50MB     95:	<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>       .          .     96:		m.unlock<span style=color:#f92672>(</span>key<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       .          .     97:	<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     98:<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     99:
+</span></span><span style=display:flex><span>       .          .    100:func <span style=color:#f92672>(</span>m *Manager<span style=color:#f92672>)</span> propagateCancel<span style=color:#f92672>(</span>parent context.Context, child context.Context, key string<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+</span></span></code></pre></div><p>Above illustrates 13.50MB of heap memory is spent on allocating request objects and their response channels.</p><p>We can introduce an object pool to promote the reuse of these channels.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>reqPool</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>c</span> <span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>request</span>
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> <span style=color:#a6e22e>NewReqPool</span>(<span style=color:#a6e22e>seed</span> <span style=color:#66d9ef>int</span>) <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span> {
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>c</span> <span style=color:#f92672>:=</span> make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>request</span>, <span style=color:#a6e22e>seed</span><span style=color:#f92672>*</span><span style=color:#ae81ff>2</span>)
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>for</span> <span style=color:#a6e22e>i</span> <span style=color:#f92672>:=</span> <span style=color:#ae81ff>0</span>; <span style=color:#a6e22e>i</span> &lt; <span style=color:#a6e22e>seed</span>; <span style=color:#a6e22e>i</span><span style=color:#f92672>++</span> {
+</span></span><span style=display:flex><span>		<span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>request</span>{<span style=color:#a6e22e>respChan</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>response</span>)}
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>select</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>c</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>r</span>:
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>default</span>:
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>		}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> <span style=color:#f92672>&amp;</span><span style=color:#a6e22e>reqPool</span>{<span style=color:#a6e22e>c</span>}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>p</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span>) <span style=color:#a6e22e>Get</span>() <span style=color:#a6e22e>request</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>select</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>r</span> <span style=color:#f92672>:=</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>p</span>.<span style=color:#a6e22e>c</span>:
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>r</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>default</span>:
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>return</span> <span style=color:#a6e22e>request</span>{<span style=color:#a6e22e>respChan</span>: make(<span style=color:#66d9ef>chan</span> <span style=color:#a6e22e>response</span>)}
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>func</span> (<span style=color:#a6e22e>p</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>reqPool</span>) <span style=color:#a6e22e>Put</span>(<span style=color:#a6e22e>r</span> <span style=color:#a6e22e>request</span>) {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>select</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>case</span> <span style=color:#f92672>&lt;-</span><span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>respChan</span>:
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>default</span>:
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>key</span> = <span style=color:#e6db74>&#34;&#34;</span>
+</span></span><span style=display:flex><span>	<span style=color:#a6e22e>r</span>.<span style=color:#a6e22e>t</span> = <span style=color:#a6e22e>Invalid</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>select</span> {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>case</span> <span style=color:#a6e22e>p</span>.<span style=color:#a6e22e>c</span> <span style=color:#f92672>&lt;-</span> <span style=color:#a6e22e>r</span>:
+</span></span><span style=display:flex><span>	}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>The above illustrates a simple channel implemented pool.
 The first implementation was a sync.Pool.
-After further profiling however implementing our own proved to be easier on the heap.</p>
-<p>After plumbing the requst pool into the rest of the code pprof reports a much nicer result.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=color:#f92672>(</span>pprof<span style=color:#f92672>)</span> list <span style=color:#ae81ff>\.</span>Lock
-Total: 80.06MB
-ROUTINE <span style=color:#f92672>========================</span> github.com/ldelossa/distlock.<span style=color:#f92672>(</span>*Manager<span style=color:#f92672>)</span>.Lock in /home/louis/git/go/distlock/manager.go
-     1MB        1MB <span style=color:#f92672>(</span>flat, cum<span style=color:#f92672>)</span>  1.25% of Total
-       .          .     89:		<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{}</span>
-       .          .     90:	<span style=color:#f92672>}</span>
-       .          .     91:
-       .          .     92:	m.propagateCancel<span style=color:#f92672>(</span>ctx, resp.ctx, key<span style=color:#f92672>)</span>
-       .          .     93:
-     1MB        1MB     94:	<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
-       .          .     95:		m.unlock<span style=color:#f92672>(</span>key<span style=color:#f92672>)</span>
-       .          .     96:	<span style=color:#f92672>}</span>
-       .          .     97:<span style=color:#f92672>}</span>
-       .          .     98:
-       .          .     99:func <span style=color:#f92672>(</span>m *Manager<span style=color:#f92672>)</span> propagateCancel<span style=color:#f92672>(</span>parent context.Context, child context.Context, key string<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
-</code></pre></div><h2 id=a-pgx-trick>A PGX Trick</h2>
-<p>Removing the cost of the response-request model was a good win but there is still more to tune.</p>
-<p>Lets generate a graph of our call stack and associated allocations.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>❯ go tool pprof -svg distlock.test memprofile.out
-</code></pre></div><p><img src=/profile001.png alt="photo of high PGX allocations"></p>
-<p>The above diagram is showing a large amount of allocations in PGX&rsquo;s getRows method.
+After further profiling however implementing our own proved to be easier on the heap.</p><p>After plumbing the requst pool into the rest of the code pprof reports a much nicer result.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#f92672>(</span>pprof<span style=color:#f92672>)</span> list <span style=color:#ae81ff>\.</span>Lock
+</span></span><span style=display:flex><span>Total: 80.06MB
+</span></span><span style=display:flex><span>ROUTINE <span style=color:#f92672>========================</span> github.com/ldelossa/distlock.<span style=color:#f92672>(</span>*Manager<span style=color:#f92672>)</span>.Lock in /home/louis/git/go/distlock/manager.go
+</span></span><span style=display:flex><span>     1MB        1MB <span style=color:#f92672>(</span>flat, cum<span style=color:#f92672>)</span>  1.25% of Total
+</span></span><span style=display:flex><span>       .          .     89:		<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{}</span>
+</span></span><span style=display:flex><span>       .          .     90:	<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     91:
+</span></span><span style=display:flex><span>       .          .     92:	m.propagateCancel<span style=color:#f92672>(</span>ctx, resp.ctx, key<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       .          .     93:
+</span></span><span style=display:flex><span>     1MB        1MB     94:	<span style=color:#66d9ef>return</span> resp.ctx, func<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>       .          .     95:		m.unlock<span style=color:#f92672>(</span>key<span style=color:#f92672>)</span>
+</span></span><span style=display:flex><span>       .          .     96:	<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     97:<span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>       .          .     98:
+</span></span><span style=display:flex><span>       .          .     99:func <span style=color:#f92672>(</span>m *Manager<span style=color:#f92672>)</span> propagateCancel<span style=color:#f92672>(</span>parent context.Context, child context.Context, key string<span style=color:#f92672>)</span> <span style=color:#f92672>{</span>
+</span></span></code></pre></div><h2 id=a-pgx-trick>A PGX Trick</h2><p>Removing the cost of the response-request model was a good win but there is still more to tune.</p><p>Lets generate a graph of our call stack and associated allocations.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>❯ go tool pprof -svg distlock.test memprofile.out
+</span></span></code></pre></div><p><img src=/profile001.png alt="photo of high PGX allocations"></p><p>The above diagram is showing a large amount of allocations in PGX&rsquo;s getRows method.
 Its not rare for methods dealing with serialization to and from the database to allocate heavily.
-But it would be nice if we could eliminate this.</p>
-<p>Getting a session pg advisory lock typically looks like this.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#66d9ef>SELECT</span> pg_try_advisory_lock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>);
-<span style=color:#66d9ef>SELECT</span> pg_advisory_unlock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>);
-</code></pre></div><p>Both lock functions return a table expression resulting in a true or a false.</p>
-<p>An optimization we can make is changing these queries to only return a row if the lock function returns true.
-Our application logic can then simply check whether any rows are returned and not read the contents.</p>
-<p>First lets fix our queries.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=color:#66d9ef>SELECT</span> <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>FROM</span> pg_try_advisory_lock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>) <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>WHERE</span> <span style=color:#66d9ef>lock</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
-<span style=color:#66d9ef>SELECT</span> <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>FROM</span> pg_advisory_unlock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>) <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>WHERE</span> <span style=color:#66d9ef>lock</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
-</code></pre></div><p>A slight modification allows us to only return rows if the lock function returns true.</p>
-<p>The next step is to short circuit the PGX library from reading the rows.
-This took a bit of library spelunking but I eventually discovered this&mldr;</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>rr</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>PgConn</span>().<span style=color:#a6e22e>ExecParams</span>(<span style=color:#a6e22e>ctx</span>,
-  <span style=color:#a6e22e>trySessionUnlock</span>,
-  [][]<span style=color:#66d9ef>byte</span>{
-      <span style=color:#a6e22e>keyify</span>(<span style=color:#a6e22e>key</span>),
-  },
-  <span style=color:#66d9ef>nil</span>,
-  []<span style=color:#66d9ef>int16</span>{<span style=color:#ae81ff>1</span>},
-  <span style=color:#66d9ef>nil</span>)
-<span style=color:#a6e22e>tag</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>rr</span>.<span style=color:#a6e22e>Close</span>()
-<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>response</span>{<span style=color:#66d9ef>false</span>, <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>}
-}
-<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>tag</span>.<span style=color:#a6e22e>RowsAffected</span>() <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
-  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>response</span>{<span style=color:#66d9ef>false</span>, <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;unlock of key %s returned false&#34;</span>, <span style=color:#a6e22e>key</span>)}
-}
-</code></pre></div><p>By using the lower level PgConn object we can exec our queries, get a response writer, and immediately close it to obtain the command tag.
-The command tag tells us if any rows were affected by the exec. This effectively tells us whether the lock was obtained or not in a somewhat indirect way.</p>
-<p>Let&rsquo;s take a new 1 minute memory profile to see how this effects our heap.</p>
-<p><img src=/profile002.png alt="photo of high PGX allocations"></p>
-<p>Notice the large improvement achieved.</p>
-<p>We can also compare the benchmark output.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=color:#ae81ff>85149</span>            <span style=color:#ae81ff>890605</span> ns/op            <span style=color:#ae81ff>1288</span> B/op         <span style=color:#ae81ff>21</span> allocs/op
-</code></pre></div><p>Where PGX was reading the rows.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=color:#ae81ff>58051</span>           <span style=color:#ae81ff>1238353</span> ns/op             <span style=color:#ae81ff>517</span> B/op         <span style=color:#ae81ff>11</span> allocs/op
-</code></pre></div><p>By eliminating the reading of rows we perform many more cycles and cut our allocation in roughly half.</p>
-<h2 id=disclaimer-on-optimization>Disclaimer on optimization</h2>
-<p>Is it worth to dig this deep into your allocations? Depends.
+But it would be nice if we could eliminate this.</p><p>Getting a session pg advisory lock typically looks like this.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#66d9ef>SELECT</span> pg_try_advisory_lock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>);
+</span></span><span style=display:flex><span><span style=color:#66d9ef>SELECT</span> pg_advisory_unlock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>);
+</span></span></code></pre></div><p>Both lock functions return a table expression resulting in a true or a false.</p><p>An optimization we can make is changing these queries to only return a row if the lock function returns true.
+Our application logic can then simply check whether any rows are returned and not read the contents.</p><p>First lets fix our queries.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-sql data-lang=sql><span style=display:flex><span><span style=color:#66d9ef>SELECT</span> <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>FROM</span> pg_try_advisory_lock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>) <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>WHERE</span> <span style=color:#66d9ef>lock</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
+</span></span><span style=display:flex><span><span style=color:#66d9ef>SELECT</span> <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>FROM</span> pg_advisory_unlock(<span style=color:#960050;background-color:#1e0010>$</span><span style=color:#ae81ff>1</span>) <span style=color:#66d9ef>lock</span> <span style=color:#66d9ef>WHERE</span> <span style=color:#66d9ef>lock</span> <span style=color:#f92672>=</span> <span style=color:#66d9ef>true</span>;
+</span></span></code></pre></div><p>A slight modification allows us to only return rows if the lock function returns true.</p><p>The next step is to short circuit the PGX library from reading the rows.
+This took a bit of library spelunking but I eventually discovered this&mldr;</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>rr</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>m</span>.<span style=color:#a6e22e>conn</span>.<span style=color:#a6e22e>PgConn</span>().<span style=color:#a6e22e>ExecParams</span>(<span style=color:#a6e22e>ctx</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>trySessionUnlock</span>,
+</span></span><span style=display:flex><span>  [][]<span style=color:#66d9ef>byte</span>{
+</span></span><span style=display:flex><span>      <span style=color:#a6e22e>keyify</span>(<span style=color:#a6e22e>key</span>),
+</span></span><span style=display:flex><span>  },
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>nil</span>,
+</span></span><span style=display:flex><span>  []<span style=color:#66d9ef>int16</span>{<span style=color:#ae81ff>1</span>},
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>nil</span>)
+</span></span><span style=display:flex><span><span style=color:#a6e22e>tag</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>rr</span>.<span style=color:#a6e22e>Close</span>()
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>response</span>{<span style=color:#66d9ef>false</span>, <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>err</span>}
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#a6e22e>tag</span>.<span style=color:#a6e22e>RowsAffected</span>() <span style=color:#f92672>==</span> <span style=color:#ae81ff>0</span> {
+</span></span><span style=display:flex><span>  <span style=color:#66d9ef>return</span> <span style=color:#a6e22e>response</span>{<span style=color:#66d9ef>false</span>, <span style=color:#66d9ef>nil</span>, <span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Errorf</span>(<span style=color:#e6db74>&#34;unlock of key %s returned false&#34;</span>, <span style=color:#a6e22e>key</span>)}
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>By using the lower level PgConn object we can exec our queries, get a response writer, and immediately close it to obtain the command tag.
+The command tag tells us if any rows were affected by the exec. This effectively tells us whether the lock was obtained or not in a somewhat indirect way.</p><p>Let&rsquo;s take a new 1 minute memory profile to see how this effects our heap.</p><p><img src=/profile002.png alt="photo of high PGX allocations"></p><p>Notice the large improvement achieved.</p><p>We can also compare the benchmark output.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#ae81ff>85149</span>            <span style=color:#ae81ff>890605</span> ns/op            <span style=color:#ae81ff>1288</span> B/op         <span style=color:#ae81ff>21</span> allocs/op
+</span></span></code></pre></div><p>Where PGX was reading the rows.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#ae81ff>58051</span>           <span style=color:#ae81ff>1238353</span> ns/op             <span style=color:#ae81ff>517</span> B/op         <span style=color:#ae81ff>11</span> allocs/op
+</span></span></code></pre></div><p>By eliminating the reading of rows we perform many more cycles and cut our allocation in roughly half.</p><h2 id=disclaimer-on-optimization>Disclaimer on optimization</h2><p>Is it worth to dig this deep into your allocations? Depends.
 If you know the code you are writing will be in the &ldquo;hot-path&rdquo; its empowering to know what your allocation profile looks like.
 Learning the skills to performance tune is addicting and powerful but writing code that can be read and easily maintained should always be the first goal.
-That being said I do think every engineer should go down the rabbit hole at least once. Its a lot of fun.</p>
-</div>
-</article>
-<hr>
-<div class=post-info>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-1106 Words
-</p>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-2020-09-15 00:00
-</p>
-</div>
-<hr>
-<div class=sharing-buttons>
-<a class=resp-sharing-button__link href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on facebook">
-<div class="resp-sharing-button resp-sharing-button--facebook resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://twitter.com/intent/tweet/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on twitter">
-<div class="resp-sharing-button resp-sharing-button--twitter resp-sharing-button--small">
-<div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.tumblr.com/widgets/share/tool?posttype=link&title=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&caption=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&canonicalUrl=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on tumblr">
-<div class="resp-sharing-button resp-sharing-button--tumblr resp-sharing-button--small">
-<div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.563 24c-5.093.0-7.031-3.756-7.031-6.411V9.747H5.116V6.648c3.63-1.313 4.512-4.596 4.71-6.469C9.84.051 9.941.0 9.999.0h3.517v6.114h4.801v3.633h-4.82v7.47c.016 1.001.375 2.371 2.207 2.371h.09c.631-.02 1.486-.205 1.936-.419l1.156 3.425c-.436.636-2.4 1.374-4.156 1.404h-.178l.011.002z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="mailto:?subject=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&body=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_self rel=noopener aria-label title="Share via email">
-<div class="resp-sharing-button resp-sharing-button--email resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1.0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1.0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://pinterest.com/pin/create/button/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f&media=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f;description=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof." target=_blank rel=noopener aria-label title="Share on pinterest">
-<div class="resp-sharing-button resp-sharing-button--pinterest resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M12.017.0C5.396.0.029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024.0 1.518.769 1.518 1.688.0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128.0 3.768-2.245 3.768-5.487.0-2.861-2.063-4.869-5.008-4.869-3.41.0-5.409 2.562-5.409 5.199.0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646.0-3.776 2.748-7.252 7.92-7.252 4.158.0 7.392 2.967 7.392 6.923.0 4.135-2.607 7.462-6.233 7.462-1.214.0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607.0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017.0z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.linkedin.com/shareArticle?mini=true&url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f&title=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&summary=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&source=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on linkedin">
-<div class="resp-sharing-button resp-sharing-button--linkedin resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://reddit.com/submit/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f&resubmit=true&title=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof." target=_blank rel=noopener aria-label title="Share on reddit">
-<div class="resp-sharing-button resp-sharing-button--reddit resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M12 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0zm5.01 4.744c.688.0 1.25.561 1.25 1.249a1.25 1.25.0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968.0 1.754.786 1.754 1.754.0.716-.435 1.333-1.01 1.614a3.111 3.111.0 01.042.52c0 2.694-3.13 4.87-7.004 4.87s-7.004-2.176-7.004-4.87c0-.183.015-.366.043-.534A1.748 1.748.0 014.028 12c0-.968.786-1.754 1.754-1.754.463.0.898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342.0 01.14-.197.35.35.0 01.238-.042l2.906.617a1.214 1.214.0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687.0 1.248-.561 1.248-1.249S9.937 12 9.249 12zm5.5.0c-.687.0-1.248.561-1.248 1.25.0.687.561 1.248 1.249 1.248S16 13.937 16 13.249c0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327.0 00-.231.094.33.33.0 000 .463c.842.842 2.484.913 2.961.913s2.105-.056 2.961-.913a.361.361.0 00.029-.463.33.33.0 00-.464.0c-.547.533-1.684.73-2.512.73-.828.0-1.979-.196-2.512-.73a.326.326.0 00-.232-.095z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.xing.com/app/user?op=share;url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f;title=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof." target=_blank rel=noopener aria-label title="Share on xing">
-<div class="resp-sharing-button resp-sharing-button--xing resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M18.188.0c-.517.0-.741.325-.927.66.0.0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211.0.375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016.0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894.0 21.686.0h-3.498zM3.648 4.74c-.211.0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016.0.021L1.86 16.051c-.099.188-.093.381.0.529.085.142.239.234.45.234h3.461c.518.0.766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.659-.962-.659H3.648v.016z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="whatsapp://send?text=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.%20https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on whatsapp">
-<div class="resp-sharing-button resp-sharing-button--whatsapp resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198.0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479.0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87.0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86.0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64.0 5.122 1.03 6.988 2.898a9.825 9.825.0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815.0 0012.05.0C5.495.0.16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882.0 005.683 1.448h.005c6.554.0 11.89-5.335 11.893-11.893a11.821 11.821.0 00-3.48-8.413z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://news.ycombinator.com/submitlink?u=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f&t=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof." target=_blank rel=noopener aria-label title="Share on hacker news">
-<div class="resp-sharing-button resp-sharing-button--hackernews resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://telegram.me/share/url?text=Optimizing%20PGX%20Allocations%20in%20Golang%20with%20Pprof.&url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fallocation_optimization_in_go%2f" target=_blank rel=noopener aria-label title="Share on telegram">
-<div class="resp-sharing-button resp-sharing-button--telegram resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-</div>
-</div>
-</a>
-</div>
-<div class=pagination>
-<div class=pagination__title>
-<span class=pagination__title-h>Read other posts</span>
-<hr>
-</div>
-<div class=pagination__buttons>
-<span class="button previous">
-<a href=https://who.ldelossa.is/posts/absolute-minimum-cryptography/>
-<span class=button__icon>←</span>
-<span class=button__text>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</span>
-</a>
-</span>
-<span class="button next">
-<a href=https://who.ldelossa.is/posts/git-worktree-flow/>
-<span class=button__text>Git Worktree Flow</span>
-<span class=button__icon>→</span>
-</a>
-</span>
-</div>
-</div>
-</main>
-</div>
-<footer class=footer>
-</footer>
-</div>
-<script type=text/javascript src=/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
-</body>
-</html>
+That being said I do think every engineer should go down the rabbit hole at least once. Its a lot of fun.</p></main><footer></footer></body></html>

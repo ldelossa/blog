@@ -1,363 +1,101 @@
-<!doctype html><html lang=en>
-<head>
-<meta charset=utf-8>
-<meta http-equiv=x-ua-compatible content="ie=edge">
-<meta name=viewport content="width=device-width,initial-scale=1,shrink-to-fit=no">
-<meta name=author content>
-<meta name=description content="What every developer should know about crytography to make their lifes easier.">
-<meta name=keywords content>
-<meta name=robots content="noodp">
-<meta name=theme-color content>
-<link rel=canonical href=https://who.ldelossa.is/posts/absolute-minimum-cryptography/>
-<title>
-The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption :: who.ldelossa.is — a.programming.blog
-</title>
-<link href=https://cdnjs.cloudflare.com/ajax/libs/flag-icon-css/3.5.0/css/flag-icon.min.css rel=stylesheet type=text/css>
-<link rel=stylesheet href=/main.2fe95403bfa6bf6df3d4da1d77c95594166f95fed0e63c24056ce34a95cd8595.css>
-<link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png>
-<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
-<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png>
-<link rel=manifest href=/site.webmanifest>
-<link rel=mask-icon href=/safari-pinned-tab.svg color>
-<link rel="shortcut icon" href=/favicon.ico>
-<meta name=msapplication-TileColor content>
-<meta name=theme-color content>
-<meta itemprop=name content="The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption">
-<meta itemprop=description content="What every developer should know about crytography to make their lifes easier."><meta itemprop=datePublished content="2020-09-22T00:00:00+00:00">
-<meta itemprop=dateModified content="2020-09-22T00:00:00+00:00">
-<meta itemprop=wordCount content="2638"><meta itemprop=image content="https://who.ldelossa.is/">
-<meta itemprop=keywords content>
-<meta name=twitter:card content="summary_large_image">
-<meta name=twitter:image content="https://who.ldelossa.is/">
-<meta name=twitter:title content="The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption">
-<meta name=twitter:description content="What every developer should know about crytography to make their lifes easier.">
-<meta property="og:title" content="The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption">
-<meta property="og:description" content="What every developer should know about crytography to make their lifes easier.">
-<meta property="og:type" content="article">
-<meta property="og:url" content="https://who.ldelossa.is/posts/absolute-minimum-cryptography/"><meta property="og:image" content="https://who.ldelossa.is/"><meta property="article:section" content="posts">
-<meta property="article:published_time" content="2020-09-22T00:00:00+00:00">
-<meta property="article:modified_time" content="2020-09-22T00:00:00+00:00"><meta property="og:site_name" content="who.ldelossa.is">
-<meta property="article:published_time" content="2020-09-22 00:00:00 +0000 UTC">
-</head>
-<body>
-<div class=container>
-<header class=header>
-<span class=header__inner>
-<a href=/ style=text-decoration:none>
-<div class=logo>
-<span class=logo__mark>></span>
-<span class=logo__text>nc who.ldelossa.is 80</span>
-<span class=logo__cursor>
-</span>
-</div>
-</a>
-<span class=header__right>
-<nav class=menu>
-<ul class=menu__inner><li><a href=/about>About</a></li><li><a href=/posts>Blog</a></li>
-</ul>
-</nav>
-<span class=menu-trigger><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M0 0h24v24H0z" fill="none"/><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
-</span>
-<span class="theme-toggle not-selectable"><svg class="theme-toggler" width="24" height="24" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 41c10.4934.0 19-8.5066 19-19C41 11.5066 32.4934 3 22 3 11.5066 3 3 11.5066 3 22s8.5066 19 19 19zM7 22C7 13.7157 13.7157 7 22 7V37C13.7157 37 7 30.2843 7 22z"/></svg></span>
-</span>
-</span>
-</header>
-<div class=content>
-<main class=post>
-<div class=post-info>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-clock"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-13 minutes
-</p>
-</div>
-<article>
-<h1 class=post-title>
-<a href=https://who.ldelossa.is/posts/absolute-minimum-cryptography/>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</a>
-</h1>
-<hr>
-<aside id=toc>
-<div class=toc-title>Table of Contents</div>
-<nav id=TableOfContents>
-<ul>
-<li><a href=#introduction>Introduction</a></li>
-<li><a href=#part-1-conceptual-overview>Part 1: Conceptual Overview</a>
-<ul>
-<li><a href=#authentication-and-encryption>Authentication and Encryption</a></li>
-<li><a href=#cryptographic-signing>Cryptographic Signing</a></li>
-<li><a href=#cryptographic-encryption>Cryptographic Encryption</a></li>
-</ul>
-</li>
-<li><a href=#part-2-applied-technologies>Part 2: Applied Technologies</a>
-<ul>
-<li><a href=#private-key-infrastructure-and-x509-certificates>Private Key Infrastructure And x509 Certificates</a></li>
-<li><a href=#tls>TLS</a></li>
-<li><a href=#json-web-tokens-and-json-web-encryption>JSON Web Tokens and JSON Web Encryption</a></li>
-</ul>
-</li>
-<li><a href=#part-2-encodings>Part 2: Encodings</a>
-<ul>
-<li><a href=#it-all-starts-with-asn1>It All Starts With ASN.1</a>
-<ul>
-<li><a href=#der>DER</a></li>
-<li><a href=#pem>PEM</a></li>
-<li><a href=#pkcs8-and-pkix>PKCS8 and PKIX</a></li>
-</ul>
-</li>
-<li><a href=#rsa-keys-and-certificates>RSA Keys And Certificates</a></li>
-</ul>
-</li>
-<li><a href=#part-3-an-example>Part 3: An example</a></li>
-<li><a href=#conclusion>Conclusion</a></li>
-</ul>
-</nav>
-</aside>
-<hr>
-<div class=post-content>
-<h2 id=introduction>Introduction</h2>
-<p>It&rsquo;s common to hear engineers muttering &ldquo;cryptography is scary&rdquo; or &ldquo;oh no its a cert problem.&rdquo;</p>
-<p>The topic is a dense one full of maths, mailing lists, and vulnerabilities which quite literally shock the world.
-It&rsquo;s understandable how a lot of engineers put learning about the topics to another day.</p>
-<p>In my career I have been asked to build two different certificate signing backends for IoT purposes.
-These tasks provided the opportunity to work with authentication, encryption, and cryptography at a lower level then typical.</p>
-<p>This post will outline the bare minimum engineers should understand before working with authentication and encryption systems.</p>
-<h2 id=part-1-conceptual-overview>Part 1: Conceptual Overview</h2>
-<p>This section will provide a gentle introduction to authentication and encryption.
-These topics are to be read as a conceptual overview and not as literal implementation details.</p>
-<h3 id=authentication-and-encryption>Authentication and Encryption</h3>
-<p>Cryptography can lend itself to many utilities but as software developers our usage centers around authentication and encryption.</p>
-<p>Authentication is the act of identification.
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption | a.programming.blog</title><link rel=stylesheet href=/who.ldelossa.is/css/style.css><link rel=stylesheet href=/who.ldelossa.is/css/fonts.css></head><body><nav><ul class=menu><li><a href=/who.ldelossa.is/about/>About</a></li><li><a href=/who.ldelossa.is/posts/>Posts</a></li></ul><hr></nav><div class=article-meta><h1><span class=title>The Absolute Minimum Every Software Engineer Must Know About Cryptographic Authentication and Encryption</span></h1><h2 class=date>2020/09/22</h2></div><main><h2 id=introduction>Introduction</h2><p>It&rsquo;s common to hear engineers muttering &ldquo;cryptography is scary&rdquo; or &ldquo;oh no its a cert problem.&rdquo;</p><p>The topic is a dense one full of maths, mailing lists, and vulnerabilities which quite literally shock the world.
+It&rsquo;s understandable how a lot of engineers put learning about the topics to another day.</p><p>In my career I have been asked to build two different certificate signing backends for IoT purposes.
+These tasks provided the opportunity to work with authentication, encryption, and cryptography at a lower level then typical.</p><p>This post will outline the bare minimum engineers should understand before working with authentication and encryption systems.</p><h2 id=part-1-conceptual-overview>Part 1: Conceptual Overview</h2><p>This section will provide a gentle introduction to authentication and encryption.
+These topics are to be read as a conceptual overview and not as literal implementation details.</p><h3 id=authentication-and-encryption>Authentication and Encryption</h3><p>Cryptography can lend itself to many utilities but as software developers our usage centers around authentication and encryption.</p><p>Authentication is the act of identification.
 Cryptography can guarantee authentication and thus provide trust that the subject you are communicating with is indeed who they say they are.
-Authentication is implemented by cryptographic signing.</p>
-<p>Encryption is the act of concealing communications from unintended audiences.
-When a communication is encrypted it is guaranteed to be viewable only by the intended party.</p>
-<p>Authentication and encryption are used together to device a notion of trust in our applications and on the internet.</p>
-<h3 id=cryptographic-signing>Cryptographic Signing</h3>
-<p>Cryptographically signing a message proves authentication in a single direction. It works like so:</p>
-<ul>
-<li>Sender: constructs a message to be sent.</li>
-<li>Sender: constructs a key to sign the message with.</li>
-<li>Sender: uses a signing algorithm to sign the bits of the message with the constructed keys.</li>
-<li>Sender: sends message along with signature to client.</li>
-<li>Receiver: receives the message and signature.</li>
-<li>Receiver: retrieves the sender&rsquo;s key.</li>
-<li>Receiver: uses the sender&rsquo;s key to sign the received message.</li>
-<li>Receiver: compares the sender&rsquo;s signature with the one computed by the receiver itself.</li>
-</ul>
-<p>If the receiver sees both signatures as equal and knows it can trust the key used to create the signature, the receiver can trust the message is from the sender.</p>
-<p>The various ways to securely transfer the sender&rsquo;s key to the receiver will be covered a bit later in the post.</p>
-<p>Typical signing algorithms are:</p>
-<ul>
-<li>HS256 - HMAC with SHA256</li>
-<li>RSA256 - RSA Signature with SHA256</li>
-</ul>
-<h3 id=cryptographic-encryption>Cryptographic Encryption</h3>
-<p>While similar in procedure, cryptographic encryption serves a separate purpose. It works like so:</p>
-<ul>
-<li>Sender: constructs a key</li>
-<li>Sender: construct a message to send</li>
-<li>Sender: run the message bits and the key through an encryption algorithm, producing unintelligible ciphertext.</li>
-<li>Sender: sends cipher text message to receiver.</li>
-<li>Receiver: receives the message</li>
-<li>Receiver: retrieves the sender&rsquo;s key</li>
-<li>Receiver: runs the message&rsquo;s ciphertext and the retrieved key through the same encryption algorithm, producing an intelligible message.</li>
-</ul>
-<p>In the above scenario the key is being utilized on every message to encrypt the message and conceal its contents.</p>
-<p>Typical encryption algorithms are:</p>
-<ul>
-<li>DES & 3DES</li>
-<li>RSA</li>
-<li>Blowfish</li>
-<li>AES</li>
-</ul>
-<h2 id=part-2-applied-technologies>Part 2: Applied Technologies</h2>
-<p>Several widely used technologies apply signing and encryption in practice. We will cover the following:</p>
-<ul>
-<li>Private Key Infrastructure And x509 Certificates</li>
-<li>TLS (SSL)</li>
-<li>JSON Web Tokens / JSON Web Signatures</li>
-</ul>
-<h3 id=private-key-infrastructure-and-x509-certificates>Private Key Infrastructure And x509 Certificates</h3>
-<p>Private key infrastructure, or PKI for short, is a grouping of technologies, protocols, and policies.
-This grouping can be used in tandem to ensure both authentication and encryption and securely transfer keys between parties.</p>
-<p>PKI is based on a private/public key model.
-In this model a private key is used for signing or encryption while the public key is used for verification or decryption.</p>
-<p>*aside: Often the terms &ldquo;asymmetric&rdquo; and &ldquo;symmetric&rdquo; encryption come up. When the same key is used to encrypt and decrypt a message, this is known as &ldquo;symmetric&rdquo; encryption. When a key is used to encrypt a message as a different key is used to decrypt the message, this is known as &ldquo;asymmetric&rdquo; encryption. Public/Private key encryption is considered &ldquo;asymmetric&rdquo;.</p>
-<p>The private key is kept secret and used to sign data while the public key can verify what the private key signs.
-The public key can never be used to derive the private key and this is mathematically proven.</p>
-<p><em>aside: PKI infrastructure will typically use RSA public and private keys. We dig into this more later in the post.</em></p>
-<p>In our examples above the sender would sign a message with its private key, make its public key available to the receiver, and the receiver would verify the message utilizing the sender&rsquo;s public key.</p>
-<p>PKI is called an &lsquo;infrastructure&rsquo; because it provides a trust policy in addition to authentication and encryption.</p>
-<p>In PKI the trust policy takes the form of a tree.
+Authentication is implemented by cryptographic signing.</p><p>Encryption is the act of concealing communications from unintended audiences.
+When a communication is encrypted it is guaranteed to be viewable only by the intended party.</p><p>Authentication and encryption are used together to device a notion of trust in our applications and on the internet.</p><h3 id=cryptographic-signing>Cryptographic Signing</h3><p>Cryptographically signing a message proves authentication in a single direction. It works like so:</p><ul><li>Sender: constructs a message to be sent.</li><li>Sender: constructs a key to sign the message with.</li><li>Sender: uses a signing algorithm to sign the bits of the message with the constructed keys.</li><li>Sender: sends message along with signature to client.</li><li>Receiver: receives the message and signature.</li><li>Receiver: retrieves the sender&rsquo;s key.</li><li>Receiver: uses the sender&rsquo;s key to sign the received message.</li><li>Receiver: compares the sender&rsquo;s signature with the one computed by the receiver itself.</li></ul><p>If the receiver sees both signatures as equal and knows it can trust the key used to create the signature, the receiver can trust the message is from the sender.</p><p>The various ways to securely transfer the sender&rsquo;s key to the receiver will be covered a bit later in the post.</p><p>Typical signing algorithms are:</p><ul><li>HS256 - HMAC with SHA256</li><li>RSA256 - RSA Signature with SHA256</li></ul><h3 id=cryptographic-encryption>Cryptographic Encryption</h3><p>While similar in procedure, cryptographic encryption serves a separate purpose. It works like so:</p><ul><li>Sender: constructs a key</li><li>Sender: construct a message to send</li><li>Sender: run the message bits and the key through an encryption algorithm, producing unintelligible ciphertext.</li><li>Sender: sends cipher text message to receiver.</li><li>Receiver: receives the message</li><li>Receiver: retrieves the sender&rsquo;s key</li><li>Receiver: runs the message&rsquo;s ciphertext and the retrieved key through the same encryption algorithm, producing an intelligible message.</li></ul><p>In the above scenario the key is being utilized on every message to encrypt the message and conceal its contents.</p><p>Typical encryption algorithms are:</p><ul><li>DES & 3DES</li><li>RSA</li><li>Blowfish</li><li>AES</li></ul><h2 id=part-2-applied-technologies>Part 2: Applied Technologies</h2><p>Several widely used technologies apply signing and encryption in practice. We will cover the following:</p><ul><li>Private Key Infrastructure And x509 Certificates</li><li>TLS (SSL)</li><li>JSON Web Tokens / JSON Web Signatures</li></ul><h3 id=private-key-infrastructure-and-x509-certificates>Private Key Infrastructure And x509 Certificates</h3><p>Private key infrastructure, or PKI for short, is a grouping of technologies, protocols, and policies.
+This grouping can be used in tandem to ensure both authentication and encryption and securely transfer keys between parties.</p><p>PKI is based on a private/public key model.
+In this model a private key is used for signing or encryption while the public key is used for verification or decryption.</p><p>*aside: Often the terms &ldquo;asymmetric&rdquo; and &ldquo;symmetric&rdquo; encryption come up. When the same key is used to encrypt and decrypt a message, this is known as &ldquo;symmetric&rdquo; encryption. When a key is used to encrypt a message as a different key is used to decrypt the message, this is known as &ldquo;asymmetric&rdquo; encryption. Public/Private key encryption is considered &ldquo;asymmetric&rdquo;.</p><p>The private key is kept secret and used to sign data while the public key can verify what the private key signs.
+The public key can never be used to derive the private key and this is mathematically proven.</p><p><em>aside: PKI infrastructure will typically use RSA public and private keys. We dig into this more later in the post.</em></p><p>In our examples above the sender would sign a message with its private key, make its public key available to the receiver, and the receiver would verify the message utilizing the sender&rsquo;s public key.</p><p>PKI is called an &lsquo;infrastructure&rsquo; because it provides a trust policy in addition to authentication and encryption.</p><p>In PKI the trust policy takes the form of a tree.
 At the root of the tree is the &ldquo;root CA&rdquo;, where CA is short for certificate authority.
 The root can create one or more &ldquo;intermediate CA(s)&rdquo; by creating and signing their certificate with its own private key, providing authenticity that the intermediate CA was created by the root.
-This creates a chain of trust as I can confirm an intermediate is signed by its root by obtaining the root&rsquo;s public key and verifying the certificate&rsquo;s signature.</p>
-<p>The intermediate CA is then kept online while the root CA is kept offline.
+This creates a chain of trust as I can confirm an intermediate is signed by its root by obtaining the root&rsquo;s public key and verifying the certificate&rsquo;s signature.</p><p>The intermediate CA is then kept online while the root CA is kept offline.
 This is for security purposes, if the intermediate CA private keys are compromised they can be revoked and the collateral damage can be managed.
-If the root CA&rsquo;s key is compromised all certificates created by any CA in the tree must be revoked.</p>
-<p>A diagram can help provide a visual aide.</p>
-<p><img src=/pki_hierarchy_diagram.png alt="pki hierarchy diagram"></p>
-<p>Each node in the chain has both a private key and a certificate.</p>
-<p>PKI utilizes a standardized certificate model specified in <a href=https://tools.ietf.org/html/rfc2459>rfc-2459</a>.</p>
-<p>A certificate is an envelope containing metadata and the public key of the owner. It may be used as follows:</p>
-<ul>
-<li>Sender: Signs a message with it&rsquo;s private key.</li>
-<li>Sender: Sends message to receiver.</li>
-<li>Receiver: Receives message.</li>
-<li>Receiver: Obtains the sender&rsquo;s certificate.</li>
-<li>Receiver: Verifies the certificate&rsquo;s authenticity by following the certificate trust chain.</li>
-<li>Receiver: Extracts public key from certificate and verifies message.</li>
-</ul>
-<p>Note that it is not enough to simply extract the public key and verify the message.
+If the root CA&rsquo;s key is compromised all certificates created by any CA in the tree must be revoked.</p><p>A diagram can help provide a visual aide.</p><p><img src=/pki_hierarchy_diagram.png alt="pki hierarchy diagram"></p><p>Each node in the chain has both a private key and a certificate.</p><p>PKI utilizes a standardized certificate model specified in <a href=https://tools.ietf.org/html/rfc2459>rfc-2459</a>.</p><p>A certificate is an envelope containing metadata and the public key of the owner. It may be used as follows:</p><ul><li>Sender: Signs a message with it&rsquo;s private key.</li><li>Sender: Sends message to receiver.</li><li>Receiver: Receives message.</li><li>Receiver: Obtains the sender&rsquo;s certificate.</li><li>Receiver: Verifies the certificate&rsquo;s authenticity by following the certificate trust chain.</li><li>Receiver: Extracts public key from certificate and verifies message.</li></ul><p>Note that it is not enough to simply extract the public key and verify the message.
 The receiver must verify the encountered certificate was indeed signed by the issuer&rsquo;s private key.
-This is typically performed by the receiver having a local copy of popular root and intermediate certificates, extracting the public key from the one matching the issuer of the encountered certificate, and verifying the signature.</p>
-<p>It is worthwhile to take a pragmatic look at setting up a root CA, intermediate, and signing client certificates.
-A wonderful tutorial can be found <a href=https://jamielinux.com/docs/openssl-certificate-authority/>here</a></p>
-<h3 id=tls>TLS</h3>
-<p>TLS utilizes PKI to implement encryption over HTTP also known as &ldquo;HTTPS&rdquo;.
-TLS guarantees that every bit of data between two HTTP clients is encrypted and unintelligible to any other parties which may route the traffic.</p>
-<p>TLS is a protocol which exchanges asymmetric keys, generates symmetric keys, and uses the symmetric keys to encrypt data between parties.</p>
-<p>When a browser connects to an HTTPS website a handshake occurs.
+This is typically performed by the receiver having a local copy of popular root and intermediate certificates, extracting the public key from the one matching the issuer of the encountered certificate, and verifying the signature.</p><p>It is worthwhile to take a pragmatic look at setting up a root CA, intermediate, and signing client certificates.
+A wonderful tutorial can be found <a href=https://jamielinux.com/docs/openssl-certificate-authority/>here</a></p><h3 id=tls>TLS</h3><p>TLS utilizes PKI to implement encryption over HTTP also known as &ldquo;HTTPS&rdquo;.
+TLS guarantees that every bit of data between two HTTP clients is encrypted and unintelligible to any other parties which may route the traffic.</p><p>TLS is a protocol which exchanges asymmetric keys, generates symmetric keys, and uses the symmetric keys to encrypt data between parties.</p><p>When a browser connects to an HTTPS website a handshake occurs.
 Within this handshake the server&rsquo;s certificate is verified and a set of symmetric keys are crafted.
-All communication on this secure channel is now encrypted and decrypted with the symmetric keys.</p>
-<p>The reason symmetric keys are used is for performance.
+All communication on this secure channel is now encrypted and decrypted with the symmetric keys.</p><p>The reason symmetric keys are used is for performance.
 Encrypting and decrypting with a private/public key can be expensive due to key size.
-Encryption and decryption can occur quicker with smaller symmetric keys.</p>
-<p>TLS also provides authentication.</p>
-<p>Each https server is assigned a client certificate.
+Encryption and decryption can occur quicker with smaller symmetric keys.</p><p>TLS also provides authentication.</p><p>Each https server is assigned a client certificate.
 From our PKI diagram, client certificates are the leafs.
 When a user requests information from a server, the user&rsquo;s browser will check the server&rsquo;s certificate.
-If the browser cannot prove the certificate was created by a trusted root or intermediate CA the connection will fail.</p>
-<p><em>aside: if you ever had to install a certificate bundle to a server because ssl was failing you are installing a well known set of trusted root and intermediate certificates. This is used in the above verification process.</em></p>
-<p>With TLS comes maintenance.
+If the browser cannot prove the certificate was created by a trusted root or intermediate CA the connection will fail.</p><p><em>aside: if you ever had to install a certificate bundle to a server because ssl was failing you are installing a well known set of trusted root and intermediate certificates. This is used in the above verification process.</em></p><p>With TLS comes maintenance.
 TLS certificates expire over time and must be kept up to date.
 Traditionally a server TLS certificate would be purchased from a well known root CA such as DigiTrust.
-Today, &ldquo;let&rsquo;s encrypt&rdquo; has paved the way for free certificates, albeit these certs expire much sooner then ones you can purchase from a trusted root ca.</p>
-<h3 id=json-web-tokens-and-json-web-encryption>JSON Web Tokens and JSON Web Encryption</h3>
-<p>JSON Web Tokens or JWT for short has become a popular form of authentication in modern web applications.
-When coupled with JSON Web Encryption both authentication and encryption can be utilized.</p>
-<p>The ubiquity of JWT and JSE is due to it&rsquo;s simplicity and ease of use.
-Both specifications use JSON to transfer a signed and optionally encrypted token between parties.</p>
-<p>This token can optionally contain claims, key/value information potentially useful for the receiving party along with several other &ldquo;sections&rdquo; which are base64 encoded and signed.
-The full details of generating a token can be viewed <a href=https://jwt.io/introduction/>here</a>.</p>
-<p>The flow of jwt interaction follows:</p>
-<ul>
-<li>Sender: generates the header and the payload for the JWT.</li>
-<li>Sender: generate the signature for the JWT utilizing a key.</li>
-<li>Sender: places the token in an &ldquo;authorization&rdquo; http header.</li>
-<li>Receiver: parses the &ldquo;authorization&rdquo; header and retrieves the token.</li>
-<li>Receiver: retrieves the sender&rsquo;s key.</li>
-<li>Receiver: verifies the signature portion with the sender&rsquo;s key.</li>
-</ul>
-<p>JWT alone provides no key transfer facilities and the token&rsquo;s data is in plain text.
-However, with JSON Web Encryption (JWE) it becomes possible to piggyback off PKI and retrieve public keys via the public key infrastructure.</p>
-<p>More than a high level overview is further then this post would like to go.
-If you are interested in further details on JWT and JWE I suggest checking out the <a href=https://tools.ietf.org/html/rfc7519>JWT RFC</a> and <a href=https://tools.ietf.org/html/rfc7516>JWE RFC</a> directly.</p>
-<p>Understanding this post will lend itself to utilizing JWT and JWE without much difficulty, as their components build on the fundamentals.</p>
-<h2 id=part-2-encodings>Part 2: Encodings</h2>
-<p>The following topics will describe the ubiquitous encoding formats encountered in modern authentication and encryption applications.</p>
-<h3 id=it-all-starts-with-asn1>It All Starts With ASN.1</h3>
-<p>ASN.1 is a language for <strong>describing</strong> encodings.</p>
-<p>A user of ASN.1 can write out ASN.1 data types.</p>
-<p>A consumer of ASN.1 definitions program how these objects will serialize to disk or a network wire.
-This is referred to as an &ldquo;encoding&rdquo; of ASN.1 types.</p>
-<p>For example an ASN.1 definition may describe a data structure comprised of two integer fields, an array of integers field, and a string field in a similar fashion as a structure in Go.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Obj</span> <span style=color:#66d9ef>struct</span> {
-    <span style=color:#a6e22e>X</span> <span style=color:#66d9ef>int</span>
-    <span style=color:#a6e22e>Y</span> <span style=color:#66d9ef>int</span>
-    <span style=color:#a6e22e>Values</span> []<span style=color:#66d9ef>int</span>
-    <span style=color:#a6e22e>Name</span> <span style=color:#66d9ef>string</span>
-}
-</code></pre></div><p>Just as we can take any Go struct with public members and encode it into JSON, ASN.1 provides a common language to define structures and encode it into several forms.</p>
-<p>ASN.1 is heavily used in the telecommunication industry and remains popular due to its extensibility.</p>
-<h4 id=der>DER</h4>
-<p>DER specifies a set of rules for encoding ASN.1 objects into binary.</p>
-<p>Any objects described in ASN.1 can be encoded into DER and serialized as binary.</p>
-<p>Libraries will often return DER encoded keys and certificates when crafting cryptographic primitives.
-It can be convenient for applications to work with DER as any penalty for marshalling/unmarshalling the binary to ASCII is not present.</p>
-<h4 id=pem>PEM</h4>
-<p>PEM is simply the base64 encoded DER data surrounded by a block of ASCII text.
-Since DER can encode several ASN.1 formats and PEM simply holds a base64 representation of this data, PEM can hold multiple ASN.1 described formats transitively.</p>
-<p>PEM is the encoding public keys, private keys, and certificates are typically transported in, as they are human readable and can be instantly recognized.</p>
-<p>A PEM private key follows:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>-----BEGIN RSA PRIVATE KEY-----
-MIIEpQIBAAKCAQEA3Tz2mr7SZiAMfQyuvBjM9Oi..Z1BjP5CE/Wm/Rr500P
-RK+Lh9x5eJPo5CAZ3/ANBE0sTK0ZsDGMak2m1g7..3VHqIxFTz0Ta1d+NAj
-wnLe4nOb7/eEJbDPkk05ShhBrJGBKKxb8n104o/..PdzbFMIyNjJzBM2o5y
-5A13wiLitEO7nco2WfyYkQzaxCw0AwzlkVHiIyC..71pSzkv6sv+4IDMbT/
-XpCo8L6wTarzrywnQsh+etLD6FtTjYbbrvZ8RQM..Hg2qxraAV++HNBYmNW
-s0duEdjUbJK+ZarypXI9TtnS4o1Ckj7POfljiQI..IBAFyidxtqRQyv5KrD
-kbJ+q+rsJxQlaipn2M4lGuQJEfIxELFDyd3XpxP..Un/82NZNXlPmRIopXs
-2T91jiLZEUKQw+n73j26adTbteuEaPGSrTZxBLR..yssO0wWomUyILqVeti
-6AkL0NJAuKcucHGqWVgUIa4g1haE0ilcm6dWUDo..fd+PpzdCJf1s4NdUWK
-YV2GJcutGQb+jqT5DTUqAgST7N8M28rwjK6nVMI..BUpP0xpPnuYDyPOw6x
-4hBt8DZQYyduzIXBXRBKNiNdv8fum68/5klHxp6..4HRkMUL958UVeljUsT
-BFQlO9UCgYEA/VqzXVzlz8K36VSTMPEhB5zBATV..PRiXtYK1YpYV4/jSUj
-vvT4hP8uoYNC+BlEMi98LtnxZIh0V4rqHDsScAq..VyeSLH0loKMZgpwFEm
-bEIDnEOD0nKrfT/9K9sPYgvB43wsLEtUujaYw3W..Liy0WKmB8CgYEA34xn
-1QlOOhHBn9Z8qYjoDYhvcj+a89tD9eMPhesfQFw..rsfGcXIonFmWdVygbe
-6Doihc+GIYIq/QP4jgMksE1ADvczJSke92ZfE2i..fitBpQERNJO0BlabfP
-ALs5NssKNmLkWS2U2BHCbv4DzDXwiQB37KPOL1c..kBHfF2/htIs20d1UVL
-+PK+aXKwguI6bxLGZ3of0UH+mGsSl0mkp7kYZCm..OTQtfeRqP8rDSC7DgA
-kHc5ajYqh04AzNFaxjRo+M3IGICUaOdKnXd0Fda..QwfoaX4QlRTgLqb7AN
-ZTzM9WbmnYoXrx17kZlT3lsCgYEAm757XI3WJVj..WoLj1+v48WyoxZpcai
-uv9bT4Cj+lXRS+gdKHK+SH7J3x2CRHVS+WH/SVC..DxuybvebDoT0TkKiCj
-BWQaGzCaJqZa+POHK0klvS+9ln0/6k539p95tfX..X4TCzbVG6+gJiX0ysz
-Yfehn5MCgYEAkMiKuWHCsVyCab3RUf6XA9gd3qY..fCTIGtS1tR5PgFIV+G
-engiVoWc/hkj8SBHZz1n1xLN7KDf8ySU06MDggB..hJ+gXJKy+gf3mF5Kmj
-DtkpjGHQzPF6vOe907y5NQLvVFGXUq/FIJZxB8k..fJdHEm2M4<span style=color:#f92672>=</span>
------END RSA PRIVATE KEY-----
-</code></pre></div><p>Because the base64 value can be several ASN.1 descriptions the PEM encoding wraps the base64 data with some header information.
-This is helpful for libraries which parse and decode these files.</p>
-<h4 id=pkcs8-and-pkix>PKCS8 and PKIX</h4>
-<p>PKCS8 and PKIX are formats specifically utilized for encoding a private key and a public key respectively.
+Today, &ldquo;let&rsquo;s encrypt&rdquo; has paved the way for free certificates, albeit these certs expire much sooner then ones you can purchase from a trusted root ca.</p><h3 id=json-web-tokens-and-json-web-encryption>JSON Web Tokens and JSON Web Encryption</h3><p>JSON Web Tokens or JWT for short has become a popular form of authentication in modern web applications.
+When coupled with JSON Web Encryption both authentication and encryption can be utilized.</p><p>The ubiquity of JWT and JSE is due to it&rsquo;s simplicity and ease of use.
+Both specifications use JSON to transfer a signed and optionally encrypted token between parties.</p><p>This token can optionally contain claims, key/value information potentially useful for the receiving party along with several other &ldquo;sections&rdquo; which are base64 encoded and signed.
+The full details of generating a token can be viewed <a href=https://jwt.io/introduction/>here</a>.</p><p>The flow of jwt interaction follows:</p><ul><li>Sender: generates the header and the payload for the JWT.</li><li>Sender: generate the signature for the JWT utilizing a key.</li><li>Sender: places the token in an &ldquo;authorization&rdquo; http header.</li><li>Receiver: parses the &ldquo;authorization&rdquo; header and retrieves the token.</li><li>Receiver: retrieves the sender&rsquo;s key.</li><li>Receiver: verifies the signature portion with the sender&rsquo;s key.</li></ul><p>JWT alone provides no key transfer facilities and the token&rsquo;s data is in plain text.
+However, with JSON Web Encryption (JWE) it becomes possible to piggyback off PKI and retrieve public keys via the public key infrastructure.</p><p>More than a high level overview is further then this post would like to go.
+If you are interested in further details on JWT and JWE I suggest checking out the <a href=https://tools.ietf.org/html/rfc7519>JWT RFC</a> and <a href=https://tools.ietf.org/html/rfc7516>JWE RFC</a> directly.</p><p>Understanding this post will lend itself to utilizing JWT and JWE without much difficulty, as their components build on the fundamentals.</p><h2 id=part-2-encodings>Part 2: Encodings</h2><p>The following topics will describe the ubiquitous encoding formats encountered in modern authentication and encryption applications.</p><h3 id=it-all-starts-with-asn1>It All Starts With ASN.1</h3><p>ASN.1 is a language for <strong>describing</strong> encodings.</p><p>A user of ASN.1 can write out ASN.1 data types.</p><p>A consumer of ASN.1 definitions program how these objects will serialize to disk or a network wire.
+This is referred to as an &ldquo;encoding&rdquo; of ASN.1 types.</p><p>For example an ASN.1 definition may describe a data structure comprised of two integer fields, an array of integers field, and a string field in a similar fashion as a structure in Go.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Obj</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>X</span> <span style=color:#66d9ef>int</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Y</span> <span style=color:#66d9ef>int</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Values</span> []<span style=color:#66d9ef>int</span>
+</span></span><span style=display:flex><span>    <span style=color:#a6e22e>Name</span> <span style=color:#66d9ef>string</span>
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Just as we can take any Go struct with public members and encode it into JSON, ASN.1 provides a common language to define structures and encode it into several forms.</p><p>ASN.1 is heavily used in the telecommunication industry and remains popular due to its extensibility.</p><h4 id=der>DER</h4><p>DER specifies a set of rules for encoding ASN.1 objects into binary.</p><p>Any objects described in ASN.1 can be encoded into DER and serialized as binary.</p><p>Libraries will often return DER encoded keys and certificates when crafting cryptographic primitives.
+It can be convenient for applications to work with DER as any penalty for marshalling/unmarshalling the binary to ASCII is not present.</p><h4 id=pem>PEM</h4><p>PEM is simply the base64 encoded DER data surrounded by a block of ASCII text.
+Since DER can encode several ASN.1 formats and PEM simply holds a base64 representation of this data, PEM can hold multiple ASN.1 described formats transitively.</p><p>PEM is the encoding public keys, private keys, and certificates are typically transported in, as they are human readable and can be instantly recognized.</p><p>A PEM private key follows:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>-----BEGIN RSA PRIVATE KEY-----
+</span></span><span style=display:flex><span>MIIEpQIBAAKCAQEA3Tz2mr7SZiAMfQyuvBjM9Oi..Z1BjP5CE/Wm/Rr500P
+</span></span><span style=display:flex><span>RK+Lh9x5eJPo5CAZ3/ANBE0sTK0ZsDGMak2m1g7..3VHqIxFTz0Ta1d+NAj
+</span></span><span style=display:flex><span>wnLe4nOb7/eEJbDPkk05ShhBrJGBKKxb8n104o/..PdzbFMIyNjJzBM2o5y
+</span></span><span style=display:flex><span>5A13wiLitEO7nco2WfyYkQzaxCw0AwzlkVHiIyC..71pSzkv6sv+4IDMbT/
+</span></span><span style=display:flex><span>XpCo8L6wTarzrywnQsh+etLD6FtTjYbbrvZ8RQM..Hg2qxraAV++HNBYmNW
+</span></span><span style=display:flex><span>s0duEdjUbJK+ZarypXI9TtnS4o1Ckj7POfljiQI..IBAFyidxtqRQyv5KrD
+</span></span><span style=display:flex><span>kbJ+q+rsJxQlaipn2M4lGuQJEfIxELFDyd3XpxP..Un/82NZNXlPmRIopXs
+</span></span><span style=display:flex><span>2T91jiLZEUKQw+n73j26adTbteuEaPGSrTZxBLR..yssO0wWomUyILqVeti
+</span></span><span style=display:flex><span>6AkL0NJAuKcucHGqWVgUIa4g1haE0ilcm6dWUDo..fd+PpzdCJf1s4NdUWK
+</span></span><span style=display:flex><span>YV2GJcutGQb+jqT5DTUqAgST7N8M28rwjK6nVMI..BUpP0xpPnuYDyPOw6x
+</span></span><span style=display:flex><span>4hBt8DZQYyduzIXBXRBKNiNdv8fum68/5klHxp6..4HRkMUL958UVeljUsT
+</span></span><span style=display:flex><span>BFQlO9UCgYEA/VqzXVzlz8K36VSTMPEhB5zBATV..PRiXtYK1YpYV4/jSUj
+</span></span><span style=display:flex><span>vvT4hP8uoYNC+BlEMi98LtnxZIh0V4rqHDsScAq..VyeSLH0loKMZgpwFEm
+</span></span><span style=display:flex><span>bEIDnEOD0nKrfT/9K9sPYgvB43wsLEtUujaYw3W..Liy0WKmB8CgYEA34xn
+</span></span><span style=display:flex><span>1QlOOhHBn9Z8qYjoDYhvcj+a89tD9eMPhesfQFw..rsfGcXIonFmWdVygbe
+</span></span><span style=display:flex><span>6Doihc+GIYIq/QP4jgMksE1ADvczJSke92ZfE2i..fitBpQERNJO0BlabfP
+</span></span><span style=display:flex><span>ALs5NssKNmLkWS2U2BHCbv4DzDXwiQB37KPOL1c..kBHfF2/htIs20d1UVL
+</span></span><span style=display:flex><span>+PK+aXKwguI6bxLGZ3of0UH+mGsSl0mkp7kYZCm..OTQtfeRqP8rDSC7DgA
+</span></span><span style=display:flex><span>kHc5ajYqh04AzNFaxjRo+M3IGICUaOdKnXd0Fda..QwfoaX4QlRTgLqb7AN
+</span></span><span style=display:flex><span>ZTzM9WbmnYoXrx17kZlT3lsCgYEAm757XI3WJVj..WoLj1+v48WyoxZpcai
+</span></span><span style=display:flex><span>uv9bT4Cj+lXRS+gdKHK+SH7J3x2CRHVS+WH/SVC..DxuybvebDoT0TkKiCj
+</span></span><span style=display:flex><span>BWQaGzCaJqZa+POHK0klvS+9ln0/6k539p95tfX..X4TCzbVG6+gJiX0ysz
+</span></span><span style=display:flex><span>Yfehn5MCgYEAkMiKuWHCsVyCab3RUf6XA9gd3qY..fCTIGtS1tR5PgFIV+G
+</span></span><span style=display:flex><span>engiVoWc/hkj8SBHZz1n1xLN7KDf8ySU06MDggB..hJ+gXJKy+gf3mF5Kmj
+</span></span><span style=display:flex><span>DtkpjGHQzPF6vOe907y5NQLvVFGXUq/FIJZxB8k..fJdHEm2M4<span style=color:#f92672>=</span>
+</span></span><span style=display:flex><span>-----END RSA PRIVATE KEY-----
+</span></span></code></pre></div><p>Because the base64 value can be several ASN.1 descriptions the PEM encoding wraps the base64 data with some header information.
+This is helpful for libraries which parse and decode these files.</p><h4 id=pkcs8-and-pkix>PKCS8 and PKIX</h4><p>PKCS8 and PKIX are formats specifically utilized for encoding a private key and a public key respectively.
 The former is part of a larger set of <a href=https://en.wikipedia.org/wiki/PKCS>PKCS protocols</a> defined by the RSA organization.
-The latter is defined by the Public Key Infrastructure working in <a href=https://tools.ietf.org/html/rfc5280#section-4.1>rfc-5280 section4.1</a>:</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell>SubjectPublicKeyInfo  ::<span style=color:#f92672>=</span>  SEQUENCE  <span style=color:#f92672>{</span>
-   algorithm            AlgorithmIdentifier,
-   subjectPublicKey     BIT STRING  <span style=color:#f92672>}</span>
-</code></pre></div><p>Both these formats are expressed in ASN.1 notation, therefore they can be DER encoded and subsequently PEM encoded.</p>
-<p>These formats support password protection utilizing symmetric keys where both DER and PEM do not.</p>
-<h3 id=rsa-keys-and-certificates>RSA Keys And Certificates</h3>
-<p>RSA keys are often used with x.509 certificates. As a reminder certificates are used to prove authenticity.</p>
-<p>The certificate has a public key and enough information to prove this key is from who the receiver thinks it is.</p>
-<p>A certificate is yet another ASN.1 described object defined in the <a href=https://tools.ietf.org/html/rfc5280>rfc-5280</a> and can be marshalled to DER and PEM just like the others.</p>
-<h2 id=part-3-an-example>Part 3: An example</h2>
-<p>Generate a RSA Key Pair.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>f</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Open</span>(<span style=color:#e6db74>&#34;/dev/random&#34;</span>)
-<span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
-  <span style=color:#a6e22e>log</span>.<span style=color:#a6e22e>Fatal</span>(<span style=color:#a6e22e>err</span>)
-}
-<span style=color:#a6e22e>private</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>rsa</span>.<span style=color:#a6e22e>GenerateKey</span>(<span style=color:#a6e22e>f</span>, <span style=color:#ae81ff>4096</span>)
-</code></pre></div><p>The above uses &ldquo;/dev/random&rdquo; as a random seed source and creates a 4096 bit key pair.</p>
-<p>The public key can be extracted from the private.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>public</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>private</span>.<span style=color:#a6e22e>Public</span>()
-</code></pre></div><p>Both <code>private</code> and <code>public</code> variables hold a language specific key object with fields specific to the RSA algorithm.</p>
-<p>We want to transport the public key, both PKCS1 and PKIX are formats that can accomplish this. Since we covered PKIX in this post lets use that format.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>der</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>x509</span>.<span style=color:#a6e22e>MarshalPKIXPublicKey</span>(<span style=color:#a6e22e>public</span>)
-</code></pre></div><p>This marshal function will take the language specific public key object, marshall it into the ASN.1 PKIX description, and then encode this ASN.1 description into binary.
-The <code>der</code> variable holds a byte slice containing the DER encoding of the private key.</p>
-<p>If the goal is to simply store a public key in a database the binary DER encoding fulfills this use case.
-However, if the key must transit a transport that is not byte safe such as a network or email system we must PEM encoded the byte slice.</p>
-<p>In order to PEM encode our DER encoded PKIX public key we need to create a PEM block.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Block</span> <span style=color:#66d9ef>struct</span> {
-  <span style=color:#a6e22e>Type</span>    <span style=color:#66d9ef>string</span>            <span style=color:#75715e>// The type, taken from the preamble (i.e. &#34;RSA PRIVATE KEY&#34;).
-</span><span style=color:#75715e></span>  <span style=color:#a6e22e>Headers</span> <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#66d9ef>string</span> <span style=color:#75715e>// Optional headers.
-</span><span style=color:#75715e></span>  <span style=color:#a6e22e>Bytes</span>   []<span style=color:#66d9ef>byte</span>            <span style=color:#75715e>// The decoded bytes of the contents. Typically a DER encoded ASN.1 structure.
-</span><span style=color:#75715e></span>}
-</code></pre></div><p>The structure defines a few fields.</p>
-<p><code>Type</code> is ASCII text which defines the binary data being encoded.
-For a PKIX public key this should be &ldquo;PUBLIC KEY&rdquo;.</p>
-<p>Headers allow for further details about the binary we are encoding, we will not use this.</p>
-<p>Finally the <code>Bytes</code> field contains the binary data we are going to base64 encode into ASCII.
-Remember a PEM is simply the base64 encoded binary data with some ASCII type and header information heading and footing the results.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>block</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>pem</span>.<span style=color:#a6e22e>Block</span>{
-  <span style=color:#a6e22e>Type</span>:  <span style=color:#e6db74>&#34;PUBLIC KEY&#34;</span>,
-  <span style=color:#a6e22e>Bytes</span>: <span style=color:#a6e22e>der</span>,
-}
-<span style=color:#a6e22e>pem</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>pem</span>.<span style=color:#a6e22e>EncodeToMemory</span>(<span style=color:#a6e22e>block</span>)
-</code></pre></div><p>The above defines the block and encodes our binary PKIX key into an ASCII PEM format.</p>
-<p>At this point we can print the pem encoded key and see a familiar sight.</p>
-<div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Print</span>(string(<span style=color:#a6e22e>pem</span>))
-</code></pre></div><pre tabindex=0><code>-----BEGIN PUBLIC KEY-----
+The latter is defined by the Public Key Infrastructure working in <a href=https://tools.ietf.org/html/rfc5280#section-4.1>rfc-5280 section4.1</a>:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span>SubjectPublicKeyInfo  ::<span style=color:#f92672>=</span>  SEQUENCE  <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>   algorithm            AlgorithmIdentifier,
+</span></span><span style=display:flex><span>   subjectPublicKey     BIT STRING  <span style=color:#f92672>}</span>
+</span></span></code></pre></div><p>Both these formats are expressed in ASN.1 notation, therefore they can be DER encoded and subsequently PEM encoded.</p><p>These formats support password protection utilizing symmetric keys where both DER and PEM do not.</p><h3 id=rsa-keys-and-certificates>RSA Keys And Certificates</h3><p>RSA keys are often used with x.509 certificates. As a reminder certificates are used to prove authenticity.</p><p>The certificate has a public key and enough information to prove this key is from who the receiver thinks it is.</p><p>A certificate is yet another ASN.1 described object defined in the <a href=https://tools.ietf.org/html/rfc5280>rfc-5280</a> and can be marshalled to DER and PEM just like the others.</p><h2 id=part-3-an-example>Part 3: An example</h2><p>Generate a RSA Key Pair.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>f</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>os</span>.<span style=color:#a6e22e>Open</span>(<span style=color:#e6db74>&#34;/dev/random&#34;</span>)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>if</span> <span style=color:#a6e22e>err</span> <span style=color:#f92672>!=</span> <span style=color:#66d9ef>nil</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>log</span>.<span style=color:#a6e22e>Fatal</span>(<span style=color:#a6e22e>err</span>)
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span><span style=color:#a6e22e>private</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>rsa</span>.<span style=color:#a6e22e>GenerateKey</span>(<span style=color:#a6e22e>f</span>, <span style=color:#ae81ff>4096</span>)
+</span></span></code></pre></div><p>The above uses &ldquo;/dev/random&rdquo; as a random seed source and creates a 4096 bit key pair.</p><p>The public key can be extracted from the private.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>public</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>private</span>.<span style=color:#a6e22e>Public</span>()
+</span></span></code></pre></div><p>Both <code>private</code> and <code>public</code> variables hold a language specific key object with fields specific to the RSA algorithm.</p><p>We want to transport the public key, both PKCS1 and PKIX are formats that can accomplish this. Since we covered PKIX in this post lets use that format.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>der</span>, <span style=color:#a6e22e>err</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>x509</span>.<span style=color:#a6e22e>MarshalPKIXPublicKey</span>(<span style=color:#a6e22e>public</span>)
+</span></span></code></pre></div><p>This marshal function will take the language specific public key object, marshall it into the ASN.1 PKIX description, and then encode this ASN.1 description into binary.
+The <code>der</code> variable holds a byte slice containing the DER encoding of the private key.</p><p>If the goal is to simply store a public key in a database the binary DER encoding fulfills this use case.
+However, if the key must transit a transport that is not byte safe such as a network or email system we must PEM encoded the byte slice.</p><p>In order to PEM encode our DER encoded PKIX public key we need to create a PEM block.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#66d9ef>type</span> <span style=color:#a6e22e>Block</span> <span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>Type</span>    <span style=color:#66d9ef>string</span>            <span style=color:#75715e>// The type, taken from the preamble (i.e. &#34;RSA PRIVATE KEY&#34;).
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#a6e22e>Headers</span> <span style=color:#66d9ef>map</span>[<span style=color:#66d9ef>string</span>]<span style=color:#66d9ef>string</span> <span style=color:#75715e>// Optional headers.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>  <span style=color:#a6e22e>Bytes</span>   []<span style=color:#66d9ef>byte</span>            <span style=color:#75715e>// The decoded bytes of the contents. Typically a DER encoded ASN.1 structure.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>}
+</span></span></code></pre></div><p>The structure defines a few fields.</p><p><code>Type</code> is ASCII text which defines the binary data being encoded.
+For a PKIX public key this should be &ldquo;PUBLIC KEY&rdquo;.</p><p>Headers allow for further details about the binary we are encoding, we will not use this.</p><p>Finally the <code>Bytes</code> field contains the binary data we are going to base64 encode into ASCII.
+Remember a PEM is simply the base64 encoded binary data with some ASCII type and header information heading and footing the results.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>block</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>pem</span>.<span style=color:#a6e22e>Block</span>{
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>Type</span>:  <span style=color:#e6db74>&#34;PUBLIC KEY&#34;</span>,
+</span></span><span style=display:flex><span>  <span style=color:#a6e22e>Bytes</span>: <span style=color:#a6e22e>der</span>,
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span><span style=color:#a6e22e>pem</span> <span style=color:#f92672>:=</span> <span style=color:#a6e22e>pem</span>.<span style=color:#a6e22e>EncodeToMemory</span>(<span style=color:#a6e22e>block</span>)
+</span></span></code></pre></div><p>The above defines the block and encodes our binary PKIX key into an ASCII PEM format.</p><p>At this point we can print the pem encoded key and see a familiar sight.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-go data-lang=go><span style=display:flex><span><span style=color:#a6e22e>fmt</span>.<span style=color:#a6e22e>Print</span>(string(<span style=color:#a6e22e>pem</span>))
+</span></span></code></pre></div><pre tabindex=0><code>-----BEGIN PUBLIC KEY-----
 MIICCgKCAgEAsWQmmNw+gBRR2vq59w2LyUtJ/E3kKiatjGYmpTuSlrzbIiXNL3qz
 xWGUhgux6UYJlEReT6eCwIfVJvVGJVRl/cL5ji3FCg+PAUqkn9BIFODx1MHWyWDe
 4/nQpfNpW7NjPW90M2yYR3YVKscyupidpJS3o99Iay3KmYn1xJ6HBaFTx3WXo9xG
@@ -370,108 +108,6 @@ hHXi1k9v1pMIjqUPWIo6JVtuuctX6ypTq3Q8PbJ4XCybIDemA7juKG3idyruUXS+
 gxHQwz9xDtXKDXkZk7ovyVGISAKBpW7o4VBnE3zkpOQGluH/QfUWjX/fiD6cazz6
 msBtiBSSjM6yL+CosTSarhgd1qB0y3/ZgwDTRL+Ax2vvmiz06mfSjsUCAwEAAQ==
 -----END PUBLIC KEY-----
-</code></pre><h2 id=conclusion>Conclusion</h2>
-<p>A novice&rsquo;s view of cryptography is clouded by unfamiliar terminology and acronyms.
-This often leads to engineers avoiding the subject all together.</p>
-<p>This post makes it apparent that working with cryptography in a pragmatic sense has parallels with json or protobuf.
-At the end of the day, we describe a machine agnostic definition of an object (ASN.1), specify a way to encode this description (DER), and optionally modify the binary encoding to be network and email friendly (PEM).</p>
-<p>With this new perspective tasks dealing with certificates, ssl, authentication, and encryption should be demystified enough to tackle.</p>
-</div>
-</article>
-<hr>
-<div class=post-info>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-file-text"><path d="M14 2H6A2 2 0 004 4v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-2638 Words
-</p>
-<p><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-calendar"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-2020-09-22 00:00
-</p>
-</div>
-<hr>
-<div class=sharing-buttons>
-<a class=resp-sharing-button__link href="https://facebook.com/sharer/sharer.php?u=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on facebook">
-<div class="resp-sharing-button resp-sharing-button--facebook resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://twitter.com/intent/tweet/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on twitter">
-<div class="resp-sharing-button resp-sharing-button--twitter resp-sharing-button--small">
-<div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 3a10.9 10.9.0 01-3.14 1.53 4.48 4.48.0 00-7.86 3v1A10.66 10.66.0 013 4s-4 9 5 13a11.64 11.64.0 01-7 2c9 5 20 0 20-11.5a4.5 4.5.0 00-.08-.83A7.72 7.72.0 0023 3z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.tumblr.com/widgets/share/tool?posttype=link&title=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&caption=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&canonicalUrl=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on tumblr">
-<div class="resp-sharing-button resp-sharing-button--tumblr resp-sharing-button--small">
-<div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.563 24c-5.093.0-7.031-3.756-7.031-6.411V9.747H5.116V6.648c3.63-1.313 4.512-4.596 4.71-6.469C9.84.051 9.941.0 9.999.0h3.517v6.114h4.801v3.633h-4.82v7.47c.016 1.001.375 2.371 2.207 2.371h.09c.631-.02 1.486-.205 1.936-.419l1.156 3.425c-.436.636-2.4 1.374-4.156 1.404h-.178l.011.002z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="mailto:?subject=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&body=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_self rel=noopener aria-label title="Share via email">
-<div class="resp-sharing-button resp-sharing-button--email resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1.0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1.0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://pinterest.com/pin/create/button/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f&media=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f;description=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption" target=_blank rel=noopener aria-label title="Share on pinterest">
-<div class="resp-sharing-button resp-sharing-button--pinterest resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M12.017.0C5.396.0.029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.162-.105-.949-.199-2.403.041-3.439.219-.937 1.406-5.957 1.406-5.957s-.359-.72-.359-1.781c0-1.663.967-2.911 2.168-2.911 1.024.0 1.518.769 1.518 1.688.0 1.029-.653 2.567-.992 3.992-.285 1.193.6 2.165 1.775 2.165 2.128.0 3.768-2.245 3.768-5.487.0-2.861-2.063-4.869-5.008-4.869-3.41.0-5.409 2.562-5.409 5.199.0 1.033.394 2.143.889 2.741.099.12.112.225.085.345-.09.375-.293 1.199-.334 1.363-.053.225-.172.271-.401.165-1.495-.69-2.433-2.878-2.433-4.646.0-3.776 2.748-7.252 7.92-7.252 4.158.0 7.392 2.967 7.392 6.923.0 4.135-2.607 7.462-6.233 7.462-1.214.0-2.354-.629-2.758-1.379l-.749 2.848c-.269 1.045-1.004 2.352-1.498 3.146 1.123.345 2.306.535 3.55.535 6.607.0 11.985-5.365 11.985-11.987C23.97 5.39 18.592.026 11.985.026L12.017.0z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.linkedin.com/shareArticle?mini=true&url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f&title=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&summary=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&source=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on linkedin">
-<div class="resp-sharing-button resp-sharing-button--linkedin resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://reddit.com/submit/?url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f&resubmit=true&title=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption" target=_blank rel=noopener aria-label title="Share on reddit">
-<div class="resp-sharing-button resp-sharing-button--reddit resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M12 0A12 12 0 000 12a12 12 0 0012 12 12 12 0 0012-12A12 12 0 0012 0zm5.01 4.744c.688.0 1.25.561 1.25 1.249a1.25 1.25.0 01-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968.0 1.754.786 1.754 1.754.0.716-.435 1.333-1.01 1.614a3.111 3.111.0 01.042.52c0 2.694-3.13 4.87-7.004 4.87s-7.004-2.176-7.004-4.87c0-.183.015-.366.043-.534A1.748 1.748.0 014.028 12c0-.968.786-1.754 1.754-1.754.463.0.898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342.0 01.14-.197.35.35.0 01.238-.042l2.906.617a1.214 1.214.0 011.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687.0 1.248-.561 1.248-1.249S9.937 12 9.249 12zm5.5.0c-.687.0-1.248.561-1.248 1.25.0.687.561 1.248 1.249 1.248S16 13.937 16 13.249c0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327.0 00-.231.094.33.33.0 000 .463c.842.842 2.484.913 2.961.913s2.105-.056 2.961-.913a.361.361.0 00.029-.463.33.33.0 00-.464.0c-.547.533-1.684.73-2.512.73-.828.0-1.979-.196-2.512-.73a.326.326.0 00-.232-.095z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://www.xing.com/app/user?op=share;url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f;title=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption" target=_blank rel=noopener aria-label title="Share on xing">
-<div class="resp-sharing-button resp-sharing-button--xing resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M18.188.0c-.517.0-.741.325-.927.66.0.0-7.455 13.224-7.702 13.657.015.024 4.919 9.023 4.919 9.023.17.308.436.66.967.66h3.454c.211.0.375-.078.463-.22.089-.151.089-.346-.009-.536l-4.879-8.916c-.004-.006-.004-.016.0-.022L22.139.756c.095-.191.097-.387.006-.535C22.056.078 21.894.0 21.686.0h-3.498zM3.648 4.74c-.211.0-.385.074-.473.216-.09.149-.078.339.02.531l2.34 4.05c.004.01.004.016.0.021L1.86 16.051c-.099.188-.093.381.0.529.085.142.239.234.45.234h3.461c.518.0.766-.348.945-.667l3.734-6.609-2.378-4.155c-.172-.315-.434-.659-.962-.659H3.648v.016z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="whatsapp://send?text=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption%20https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on whatsapp">
-<div class="resp-sharing-button resp-sharing-button--whatsapp resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198.0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479.0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87.0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86.0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64.0 5.122 1.03 6.988 2.898a9.825 9.825.0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815.0 0012.05.0C5.495.0.16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882.0 005.683 1.448h.005c6.554.0 11.89-5.335 11.893-11.893a11.821 11.821.0 00-3.48-8.413z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://news.ycombinator.com/submitlink?u=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f&t=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption" target=_blank rel=noopener aria-label title="Share on hacker news">
-<div class="resp-sharing-button resp-sharing-button--hackernews resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentcolor" stroke="none"><path d="M0 24V0h24v24H0zM6.951 5.896l4.112 7.708v5.064h1.583v-4.972l4.148-7.799h-1.749l-2.457 4.875c-.372.745-.688 1.434-.688 1.434s-.297-.708-.651-1.434L8.831 5.896h-1.88z"/></svg>
-</div>
-</div>
-</a>
-<a class=resp-sharing-button__link href="https://telegram.me/share/url?text=The%20Absolute%20Minimum%20Every%20Software%20Engineer%20Must%20Know%20About%20Cryptographic%20Authentication%20and%20Encryption&url=https%3a%2f%2fwho.ldelossa.is%2fposts%2fabsolute-minimum-cryptography%2f" target=_blank rel=noopener aria-label title="Share on telegram">
-<div class="resp-sharing-button resp-sharing-button--telegram resp-sharing-button--small"><div aria-hidden=true class="resp-sharing-button__icon resp-sharing-button__icon--solid"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentcolor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-</div>
-</div>
-</a>
-</div>
-<div class=pagination>
-<div class=pagination__title>
-<span class=pagination__title-h>Read other posts</span>
-<hr>
-</div>
-<div class=pagination__buttons>
-<span class="button previous">
-<a href=https://who.ldelossa.is/posts/qmk-docker/>
-<span class=button__icon>←</span>
-<span class=button__text>Flashing QMK Firmware With The Help Of Docker</span>
-</a>
-</span>
-<span class="button next">
-<a href=https://who.ldelossa.is/posts/allocation_optimization_in_go/>
-<span class=button__text>Optimizing PGX Allocations in Golang with Pprof.</span>
-<span class=button__icon>→</span>
-</a>
-</span>
-</div>
-</div>
-</main>
-</div>
-<footer class=footer>
-</footer>
-</div>
-<script type=text/javascript src=/bundle.min.599099f1f14b78b657d524b28e10e0c5098e7cd46e9c7aed73d577068a276c3ff1bb234cbf29cb313333e83cf411727b43157c91ce5b809e2ffc81664614608e.js integrity="sha512-WZCZ8fFLeLZX1SSyjhDgxQmOfNRunHrtc9V3BoonbD/xuyNMvynLMTMz6Dz0EXJ7QxV8kc5bgJ4v/IFmRhRgjg=="></script>
-</body>
-</html>
+</code></pre><h2 id=conclusion>Conclusion</h2><p>A novice&rsquo;s view of cryptography is clouded by unfamiliar terminology and acronyms.
+This often leads to engineers avoiding the subject all together.</p><p>This post makes it apparent that working with cryptography in a pragmatic sense has parallels with json or protobuf.
+At the end of the day, we describe a machine agnostic definition of an object (ASN.1), specify a way to encode this description (DER), and optionally modify the binary encoding to be network and email friendly (PEM).</p><p>With this new perspective tasks dealing with certificates, ssl, authentication, and encryption should be demystified enough to tackle.</p></main><footer></footer></body></html>
