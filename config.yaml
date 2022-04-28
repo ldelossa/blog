@@ -1,0 +1,11 @@
+languageCode: "en-us"
+title: "a.programming.blog"
+theme: "hugo-xmin"
+
+menu:
+  main:
+    - name: About
+      url: "about/"
+      weight: 1
+    - name: Posts
+      url: "posts/"
