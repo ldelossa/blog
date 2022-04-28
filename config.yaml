@@ -4,8 +4,8 @@ theme: "hugo-xmin"
 
 menu:
   main:
-    - name: About
-      url: "about/"
+    - name: Home
+      url: "/"
       weight: 1
     - name: Posts
       url: "posts/"

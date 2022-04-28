@@ -1,4 +1,4 @@
-# About
+# About Me
 
 My name is Louis DeLosSantos and I'm currently a software engineer at Isovalent focusing on Cilium,
 eBPF and linux kernel networking.
@@ -6,9 +6,6 @@ eBPF and linux kernel networking.
 My interests stretch across infrastructure, systems programming, networking, distributed systems and application architectures.
 
 I've worked at a lot of places, built a lot of things, and enjoy sharing my experience along the way.
-
-
-[![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ldelossa)
 
 # Open Source
 
@@ -24,9 +21,8 @@ I'm the initial designer of the latest edition of Clair.
 
 You can see some of my talks about Clair here:
 
-[Container Security with Clair](https://youtu.be/AhdPC_d0Lso)
-
-[Inside the Indexer](https://youtu.be/pEAU6E1rZWo)
+- [Container Security with Clair](https://youtu.be/AhdPC_d0Lso)
+- [Inside the Indexer](https://youtu.be/pEAU6E1rZWo)
 
 ## [litee.nvim](https://github.com/ldelossa/litee.nvim)
 
