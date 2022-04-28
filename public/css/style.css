@@ -3,23 +3,35 @@ body {
   margin: auto;
   padding: 1em;
   line-height: 1.5;
+  background: #f8f8ff
 }
 
 /* header and footer areas */
-.menu { padding: 0; }
-.menu li { display: inline-block; }
+.menu { 
+    padding: 0; 
+    text-align: left;
+}
+.menu li { 
+    display: inline-block; 
+    margin-right: 10px;
+}
 .article-meta, .menu a {
   text-decoration: none;
-  background: #eee;
+  background: #87AFD7;
   padding: 5px;
   border-radius: 5px;
 }
-.menu, .article-meta, footer { text-align: center; }
+.article-meta, footer { text-align: center; }
 .title { font-size: 1.1em; }
 footer a { text-decoration: none; }
 hr {
   border-style: dashed;
   color: #ddd;
+}
+h1 { 
+     background: #87AFD7;
+     border-radius: 5px;
+     text-align: center;
 }
 
 /* code */
