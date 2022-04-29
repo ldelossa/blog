@@ -1,9 +1,10 @@
 body {
   max-width: 800px;
   margin: auto;
-  padding: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
   line-height: 1.5;
-  background: #f8f8ff
+  background: #FFFDFA
 }
 
 /* header and footer areas */
@@ -19,15 +20,23 @@ body {
   text-decoration: none;
   background: #87AFD7;
   padding: 5px;
-  border-radius: 5px;
+  border-radius: 2px;
+  color: black;
 }
 .article-meta, footer { text-align: center; }
 .title { font-size: 1.1em; }
 .profile-img-div {
+    padding-top: 30px;
     text-align: center;
 }
 .profile-img { 
     border-radius: 50px; 
+    border: 5px solid black;
+}
+.gh-badge {
+    margin-top: 10px;
+    margin-bottom: -10px;
+    text-align: center;
 }
 footer a { text-decoration: none; }
 hr {
