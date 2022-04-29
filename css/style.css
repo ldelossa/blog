@@ -3,7 +3,7 @@ body {
   margin: auto;
   padding: 1em;
   line-height: 1.5;
-  background: #f8f8ff
+  background: #FEFEF9
 }
 
 /* header and footer areas */
@@ -19,7 +19,8 @@ body {
   text-decoration: none;
   background: #87AFD7;
   padding: 5px;
-  border-radius: 5px;
+  border-radius: 2px;
+  color: black;
 }
 .article-meta, footer { text-align: center; }
 .title { font-size: 1.1em; }
@@ -28,6 +29,7 @@ body {
 }
 .profile-img { 
     border-radius: 50px; 
+    border: 5px solid #555;
 }
 footer a { text-decoration: none; }
 hr {
