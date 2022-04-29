@@ -1,9 +1,10 @@
 body {
   max-width: 800px;
   margin: auto;
-  padding: 1em;
+  padding-left: 1em;
+  padding-right: 1em;
   line-height: 1.5;
-  background: #FEFEF9
+  background: #FFFDFA
 }
 
 /* header and footer areas */
@@ -25,6 +26,7 @@ body {
 .article-meta, footer { text-align: center; }
 .title { font-size: 1.1em; }
 .profile-img-div {
+    padding-top: 30px;
     text-align: center;
 }
 .profile-img { 
