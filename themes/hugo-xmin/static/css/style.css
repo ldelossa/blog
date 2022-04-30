@@ -4,7 +4,8 @@ body {
   padding-left: 1em;
   padding-right: 1em;
   line-height: 1.5;
-  background: #FFFDFA
+  background: #FFFDFA;
+  font-size: 20px;
 }
 
 /* header and footer areas */
