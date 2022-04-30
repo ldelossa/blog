@@ -9,9 +9,7 @@ What does death and Git have in common?
 
 Just like death, Git is a fact of life for engineers writing code in 2021.
 
-Just like death, some people fear Git while others come to terms with it.
-
-It's safe to say there is no avoiding Git, like there is no avoiding death, may as well make it work for us.
+It's safe to say there is no avoiding Git, may as well make it work for us.
 
 In this post I will share a new workflow utilizing Git's worktree feature that has been working well for me.
 
