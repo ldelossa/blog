@@ -13,7 +13,7 @@
     <nav>
     <ul class="menu">
       
-      <li><a href="/about/">About</a></li>
+      <li><a href="/">Home</a></li>
       
       <li><a href="/posts/">Posts</a></li>
       
@@ -30,30 +30,29 @@
 <main>
 <p>What does death and Git have in common?</p>
 <p>Just like death, Git is a fact of life for engineers writing code in 2021.</p>
-<p>Just like death, some people fear Git while others come to terms with it.</p>
-<p>It&rsquo;s safe to say there is no avoiding Git, like there is no avoiding death, may as well make it work for us.</p>
+<p>It&rsquo;s safe to say there is no avoiding Git, may as well make it work for us.</p>
 <p>In this post I will share a new workflow utilizing Git&rsquo;s worktree feature that has been working well for me.</p>
 <h1 id="the-scenario">The Scenario</h1>
 <p>A repository exists, a topic branch is checked out, and it is complete.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git log
-commit 2d27894d5f6876ae456470f59a21bbd77184a853 <span style="color:#f92672">(</span>HEAD -&gt; topic-branch<span style="color:#f92672">)</span>
-Author: louis &lt;louis@localhost.localdomain&gt;
-Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:02:10 <span style="color:#ae81ff">2020</span> -0400
-
-  implement plumbing
-
-commit 1cecb9d66c84cc007479330eec08ce74ae583cd2
-Author: louis &lt;louis@localhost.localdomain&gt;
-Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:36 <span style="color:#ae81ff">2020</span> -0400
-
-  implement business logic
-
-commit abff991f6549435d2d8140182fc37603cff1a2c4
-Author: louis &lt;louis@localhost.localdomain&gt;
-Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:12 <span style="color:#ae81ff">2020</span> -0400
-
-  implement storage
-</code></pre></div><p>The commit structure is clean, organized, and communicates a clean trajectory of deployment.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git log
+</span></span><span style="display:flex;"><span>commit 2d27894d5f6876ae456470f59a21bbd77184a853 <span style="color:#f92672">(</span>HEAD -&gt; topic-branch<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>Author: louis &lt;louis@localhost.localdomain&gt;
+</span></span><span style="display:flex;"><span>Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:02:10 <span style="color:#ae81ff">2020</span> -0400
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  implement plumbing
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>commit 1cecb9d66c84cc007479330eec08ce74ae583cd2
+</span></span><span style="display:flex;"><span>Author: louis &lt;louis@localhost.localdomain&gt;
+</span></span><span style="display:flex;"><span>Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:36 <span style="color:#ae81ff">2020</span> -0400
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  implement business logic
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>commit abff991f6549435d2d8140182fc37603cff1a2c4
+</span></span><span style="display:flex;"><span>Author: louis &lt;louis@localhost.localdomain&gt;
+</span></span><span style="display:flex;"><span>Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:12 <span style="color:#ae81ff">2020</span> -0400
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>  implement storage
+</span></span></code></pre></div><p>The commit structure is clean, organized, and communicates a clean trajectory of deployment.</p>
 <h1 id="time-for-review">Time For Review</h1>
 <p>A pull-request is opened against the mainline branch and a code review takes place.</p>
 <p>The requested changes are scattered across the clean commit history.</p>
@@ -63,57 +62,57 @@ Date:   Thu Aug <span style="color:#ae81ff">6</span> 16:01:12 <span style="color
 <p>A Git worktree allows the same repository to exist in multiple file system directories at once.</p>
 <p>The worktree repository can have any branch checked out including a new one.</p>
 <p>To handle the code review changes but keep our commit structure the same a worktree can be created.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git worktree add ../myrepo-pr-changes
-Preparing worktree <span style="color:#f92672">(</span>new branch <span style="color:#e6db74">&#39;myrepo-pr-changes&#39;</span><span style="color:#f92672">)</span>
-HEAD is now at 2d27894 implement plumbing
-
-$ cd ../myrepo-pr-changes
-</code></pre></div><p>The command displayed above creates the worktree directory &ldquo;myrepo-pr-changes&rdquo; one directory above our current, creates the branch &ldquo;myrepo-pr-changes&rdquo;, and check this branch out in the worktree.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git worktree add ../myrepo-pr-changes
+</span></span><span style="display:flex;"><span>Preparing worktree <span style="color:#f92672">(</span>new branch <span style="color:#e6db74">&#39;myrepo-pr-changes&#39;</span><span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>HEAD is now at 2d27894 implement plumbing
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ cd ../myrepo-pr-changes
+</span></span></code></pre></div><p>The command displayed above creates the worktree directory &ldquo;myrepo-pr-changes&rdquo; one directory above our current, creates the branch &ldquo;myrepo-pr-changes&rdquo;, and check this branch out in the worktree.</p>
 <p>The branch &ldquo;myrepo-pr-changes&rdquo; will be a staging area where the changes required to pass the code review can be implemented.</p>
 <p>This branch allows for all the niceties of a normal topic branch, you may author commits, reset any changes which you decide are not valuable, push this branch to save your work, etc&hellip;</p>
 <h1 id="checking-out-from-worktree">Checking Out From Worktree</h1>
 <p>At this stage the worktree branch &ldquo;myrepo-pr-changes&rdquo; has all the commits necessary to comfort your code reviewers.</p>
 <p>It is time to get these changes back into the topic branch.</p>
 <p>We can diff the code between &ldquo;topic-branch&rdquo; and &ldquo;myrepo-pr-change&rdquo; worktree branch.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git diff --name-only topic-branch myrepo-pr-changes
-businesslogic.go
-plumbing.go
-store.go
-</code></pre></div><p>The diff shows that specific files have changed in order to appease our code reviewers.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git diff --name-only topic-branch myrepo-pr-changes
+</span></span><span style="display:flex;"><span>businesslogic.go
+</span></span><span style="display:flex;"><span>plumbing.go
+</span></span><span style="display:flex;"><span>store.go
+</span></span></code></pre></div><p>The diff shows that specific files have changed in order to appease our code reviewers.</p>
 <p>An interactive rebase can get these changes into the correct commits by returning to the original repository directory.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ cd ../myrepo        
-
-$ git rebase -i HEAD~2
-</code></pre></div><p>Next the interactive prompt is displayed</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ cd ../myrepo        
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>$ git rebase -i HEAD~2
+</span></span></code></pre></div><p>Next the interactive prompt is displayed</p>
 <p>By specifying &ldquo;edit&rdquo; in one of our commits the changes present in the diff between &ldquo;topic-branch&rdquo; and &ldquo;myrepo-pr-changes&rdquo; can be checked out.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git rebase -i HEAD~2
-Stopped at 1cecb9d...  implement business logic
-You can amend the commit now, with
-
-git commit --amend
-
-Once you are satisfied with your changes, run
-
-git rebase --continue
-</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git checkout myrepo-pr-changes -- businesslogic.go
-</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git status
-interactive rebase in progress; onto abff991
-Last command <span style="color:#66d9ef">done</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> command <span style="color:#66d9ef">done</span><span style="color:#f92672">)</span>:
- edit 1cecb9d implement business logic
-Next command to <span style="color:#66d9ef">do</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> remaining command<span style="color:#f92672">)</span>:
- pick 2d27894 implement plumbing
-<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --edit-todo&#34;</span> to view and edit<span style="color:#f92672">)</span>
-You are currently editing a commit <span style="color:#66d9ef">while</span> rebasing branch <span style="color:#e6db74">&#39;topic-branch&#39;</span> on <span style="color:#e6db74">&#39;abff991&#39;</span>.
-<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git commit --amend&#34;</span> to amend the current commit<span style="color:#f92672">)</span>
-<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --continue&#34;</span> once you are satisfied with your changes<span style="color:#f92672">)</span>
-
-Changes to be committed:
-<span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git restore --staged &lt;file&gt;...&#34;</span> to unstage<span style="color:#f92672">)</span>
-  modified:   businesslogic.go
-</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git commit --amend
-</code></pre></div><div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ git rebase --continue
-Successfully rebased and updated refs/heads/topic-branch.
-</code></pre></div><p>In the above Git sequence the interactive rebase has paused on the &ldquo;implement business logic&rdquo; after choosing &ldquo;edit&rdquo;.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git rebase -i HEAD~2
+</span></span><span style="display:flex;"><span>Stopped at 1cecb9d...  implement business logic
+</span></span><span style="display:flex;"><span>You can amend the commit now, with
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>git commit --amend
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Once you are satisfied with your changes, run
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>git rebase --continue
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git checkout myrepo-pr-changes -- businesslogic.go
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git status
+</span></span><span style="display:flex;"><span>interactive rebase in progress; onto abff991
+</span></span><span style="display:flex;"><span>Last command <span style="color:#66d9ef">done</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> command <span style="color:#66d9ef">done</span><span style="color:#f92672">)</span>:
+</span></span><span style="display:flex;"><span> edit 1cecb9d implement business logic
+</span></span><span style="display:flex;"><span>Next command to <span style="color:#66d9ef">do</span> <span style="color:#f92672">(</span><span style="color:#ae81ff">1</span> remaining command<span style="color:#f92672">)</span>:
+</span></span><span style="display:flex;"><span> pick 2d27894 implement plumbing
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --edit-todo&#34;</span> to view and edit<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>You are currently editing a commit <span style="color:#66d9ef">while</span> rebasing branch <span style="color:#e6db74">&#39;topic-branch&#39;</span> on <span style="color:#e6db74">&#39;abff991&#39;</span>.
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git commit --amend&#34;</span> to amend the current commit<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git rebase --continue&#34;</span> once you are satisfied with your changes<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Changes to be committed:
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>use <span style="color:#e6db74">&#34;git restore --staged &lt;file&gt;...&#34;</span> to unstage<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>  modified:   businesslogic.go
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git commit --amend
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ git rebase --continue
+</span></span><span style="display:flex;"><span>Successfully rebased and updated refs/heads/topic-branch.
+</span></span></code></pre></div><p>In the above Git sequence the interactive rebase has paused on the &ldquo;implement business logic&rdquo; after choosing &ldquo;edit&rdquo;.</p>
 <p>The file &ldquo;businesslogic.go&rdquo; from our &ldquo;myrepo-pr-changes&rdquo; branch is checked out immediately adding it to our staged commits.</p>
 <p>An amendment is made to &ldquo;implement business logic&rdquo; commit, incorporating the changes in &ldquo;businesslogic.go&rdquo;.</p>
 <p>The rebase is told to continue and subsequently finishes.</p>

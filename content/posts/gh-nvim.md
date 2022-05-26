@@ -30,9 +30,9 @@ visualize, run, debug, and inspect the code locally at every commit.
 This blog post will be a constant "WIP" as features are added and shift around
 during development. `gh.nvim` is new and has not reached a stable release yet.
 
-# Getting started
+## Getting started
 
-## CLI dependencies
+### CLI dependencies
 
 `gh.nvim` requires two external CLI tools to work. 
 - `gh` - https://cli.github.com/
@@ -48,7 +48,7 @@ When `gh.nvim` opens a timer is started. This timer will perform no action until
 an issue or a pull request is opened (so don't worry if you see this when you 
 don't plan on using `gh.nvim` at the moment).
 
-## litee.nvim
+### litee.nvim
 
 `gh.nvim` is implemented with help of [litee.nvim](https://github.com/ldelossa/litee.nvim) 
 and is a Neovim plugin depedency. It must be installed for `gh.nvim` to work. 
@@ -66,7 +66,7 @@ like all the other plugins. If you're looking at `gh.nvim` and wondering
 look at `litee.nvim`'s configuration. Maybe a little confusing, but this allows 
 the panel code to be shared between multiple plugins. 
 
-## Configuration
+### Configuration
 
 For full configuration details you'll want to check out the plugin's docs using
 (:h gh.nvim). 
@@ -89,9 +89,9 @@ require('litee.gh').setup({
 ```
 Place the following function calls anywhere you setup your `neovim` plugins.
 
-# Working with pull requests
+## Working with pull requests
 
-## Opening a Pull Request
+### Opening a Pull Request
 
 A pull request can be opened with "GHOpenPR". 
 
@@ -102,7 +102,7 @@ of the PRs.
 
 ![GHOpenPR](/ghopenpr.gif)
 
-## Browsing Commits
+### Browsing Commits
 
 Once a PR is opened the PR panel will toggle itself visible. 
 
@@ -118,7 +118,7 @@ in the tree.
 
 ![GHCommit](/ghcommit.gif)
 
-## Browsing files changed
+### Browsing files changed
 
 If you prefer to browse at a higher level, a "Files Changed" tree exists as well. 
 
@@ -128,7 +128,7 @@ request.
 
 ![GHFilesChanged](/ghfileschanged.gif)
 
-## Working with review comments
+### Working with review comments
 
 The "Conversation" tree holds threads of conversations about areas of the code. 
 
@@ -154,7 +154,7 @@ do so.
 
 ![GHThreads](/ghthreads.gif)
 
-## Working with pull request comments
+### Working with pull request comments
 
 Pull request comments are separate from review comments. Pull request comments
 are not affiliated with a file diff. 

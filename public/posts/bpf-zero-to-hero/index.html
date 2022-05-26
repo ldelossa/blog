@@ -13,7 +13,7 @@
     <nav>
     <ul class="menu">
       
-      <li><a href="/about/">About</a></li>
+      <li><a href="/">Home</a></li>
       
       <li><a href="/posts/">Posts</a></li>
       
@@ -50,12 +50,12 @@ Doing this will ensure all the headers and other tools we need are installed or 
 <p>Grab the latest stable kernel from <a href="http://www.kernel.org">www.kernel.org</a> (5.11.10 as of this post).
 Both a tar-ball of the source or a <code>git clone</code> of the stable branch will work.</p>
 <p>Once its on your machine of choice build and install it.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make oldconfig 
-$ make 
-$ make install_modules
-$ make install
-$ make headers_install
-</code></pre></div><p>If this is the first time you&rsquo;re building and installing a fresh kernel
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ make oldconfig 
+</span></span><span style="display:flex;"><span>$ make 
+</span></span><span style="display:flex;"><span>$ make install_modules
+</span></span><span style="display:flex;"><span>$ make install
+</span></span><span style="display:flex;"><span>$ make headers_install
+</span></span></code></pre></div><p>If this is the first time you&rsquo;re building and installing a fresh kernel
 expect it to fail, as you do not have the required dependencies.</p>
 <p>You can google away most of these issues if you&rsquo;re on Ubuntu or Fedora.
 As a tip, jot down what dependencies you need to apt or dnf install for next time.</p>
@@ -70,13 +70,13 @@ latest and greatest BPF programs are installed.</p>
 that has replaced other tools such as BCC.</p>
 <p>Build and install this library by changing directories to it
 and running:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make
-$ make install
-</code></pre></div><p>As a spot check, confirm <code>pkg-config</code> can locate this library:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ pkg-config --exists libbpf
-$ $?
-$ <span style="color:#ae81ff">0</span>
-</code></pre></div><p>Our linker will be able to find the BPF headers fine now.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ make
+</span></span><span style="display:flex;"><span>$ make install
+</span></span></code></pre></div><p>As a spot check, confirm <code>pkg-config</code> can locate this library:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ pkg-config --exists libbpf
+</span></span><span style="display:flex;"><span>$ $?
+</span></span><span style="display:flex;"><span>$ <span style="color:#ae81ff">0</span>
+</span></span></code></pre></div><p>Our linker will be able to find the BPF headers fine now.</p>
 <h2 id="hello-world">Hello World</h2>
 <p>The following BPF program is stolen from the book
 &ldquo;Linux Observability with BPF&rdquo; book, but modified it to work with the
@@ -85,17 +85,17 @@ I don&rsquo;t take any credit for this.</p>
 <p>Lets use this &ldquo;hello world&rdquo; program to demonstrate how to
 build and run a BPF program with libbpf.</p>
 <p>Copy this code into a hello_world.c file:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
-<span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
-    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
-    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
-    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
-}
-
-<span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
-</code></pre></div><p>You&rsquo;ll notice we pull in the &ldquo;bpf/bpf_helpers.h&rdquo; file to
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+</span></span><span style="display:flex;"><span>    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
+</span></span></code></pre></div><p>You&rsquo;ll notice we pull in the &ldquo;bpf/bpf_helpers.h&rdquo; file to
 obtain the &ldquo;SEC&rdquo; macro and the &ldquo;bpf_trace_printk&rdquo; function.</p>
 <p>&ldquo;SEC&rdquo; writes some information into an ELF section, which
 the kernel will use to understand where this BPF program
@@ -106,8 +106,8 @@ call tracepoint.</p>
 will run.</p>
 <p>Go and try to build this program, it will fail, on purpose
 to demonstrated another step we need to accomplish.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ clang -O1 -target bpf -c hello_world.c -o hello_world.o
-</code></pre></div><p>You&rsquo;ll see a lot of errors about undefined types.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ clang -O1 -target bpf -c hello_world.c -o hello_world.o
+</span></span></code></pre></div><p>You&rsquo;ll see a lot of errors about undefined types.</p>
 <p>The issue is, the header <code>&lt;bpf/bpf_helpers.h&gt;</code> uses
 types defined by the kernel.</p>
 <p>We need a way to forward declare these types.</p>
@@ -122,68 +122,68 @@ file was exposed in the sys virtual directory.</p>
 file mentioned above.</p>
 <p>To build the tool &lsquo;cd&rsquo; into the source directory and
 do a quick:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ make 
-$ make install
-</code></pre></div><p>This should install the tool to <code>/usr/local/sbin/bpftool</code> by
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ make 
+</span></span><span style="display:flex;"><span>$ make install
+</span></span></code></pre></div><p>This should install the tool to <code>/usr/local/sbin/bpftool</code> by
 default.</p>
 <p>You can generate the header file, cononically named &ldquo;vmlinux.h&rdquo;
 by issuing the following command:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
-</code></pre></div><p>We can now link this header into our hello_world.c program.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;../vmlinux.h&#34; /* all kernel types */</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
-<span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
-    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
-    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
-    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
-}
-
-<span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
-</code></pre></div><p>Attempting to compile this program again should work.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>bpftool btf dump file /sys/kernel/btf/vmlinux format c &gt; vmlinux.h
+</span></span></code></pre></div><p>We can now link this header into our hello_world.c program.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;../vmlinux.h&#34; /* all kernel types */</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/bpf_helpers.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>SEC(<span style="color:#e6db74">&#34;tracepoint/syscalls/sys_enter_execve&#34;</span>)
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> bpf_prog(<span style="color:#66d9ef">void</span> <span style="color:#f92672">*</span>ctx) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">char</span> msg[] <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;Hello, BPF World!&#34;</span>;
+</span></span><span style="display:flex;"><span>    bpf_trace_printk(msg, <span style="color:#66d9ef">sizeof</span>(msg));
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">char</span> _license[] SEC(<span style="color:#e6db74">&#34;license&#34;</span>) <span style="color:#f92672">=</span> <span style="color:#e6db74">&#34;GPL&#34;</span>;
+</span></span></code></pre></div><p>Attempting to compile this program again should work.</p>
 <h2 id="a-bpf-loader">A BPF loader</h2>
 <p>Getting a BPF program to run with libbpf takes a few steps.</p>
 <p>I&rsquo;ll demonstrate with code you can copy into a &ldquo;loader.c&rdquo; file.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/libbpf.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;fcntl.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdint.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[]) {
-<span style="color:#66d9ef">struct</span> bpf_object <span style="color:#f92672">*</span>obj <span style="color:#f92672">=</span> bpf_object__open(<span style="color:#e6db74">&#34;./hello_world.o&#34;</span>);
-<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>obj) {
-  printf(<span style="color:#e6db74">&#34;failed to open bpf object file, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
-  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
-}
-printf(<span style="color:#e6db74">&#34;created bpf object, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
-
-<span style="color:#66d9ef">if</span> (bpf_object__load(obj)) {
-  printf(<span style="color:#e6db74">&#34;failed to load bpf object into kernel.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
-}
-printf(<span style="color:#e6db74">&#34;loaded bpf object into kernel</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-
-<span style="color:#66d9ef">struct</span> bpf_program <span style="color:#f92672">*</span>prog <span style="color:#f92672">=</span> bpf_program__next(NULL, obj);
-<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>prog) {
-  printf(<span style="color:#e6db74">&#34;failed to query for bpf program in loaded object</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
-}
-printf(<span style="color:#e6db74">&#34;extracted bpf program name: %s section name: %s</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
-       bpf_program__name(prog), bpf_program__section_name(prog));
-
-<span style="color:#66d9ef">struct</span> bpf_link <span style="color:#f92672">*</span>link <span style="color:#f92672">=</span> bpf_program__attach(prog);
-<span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>link) {
-  printf(<span style="color:#e6db74">&#34;failed to attach bpf program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
-}
-printf(<span style="color:#e6db74">&#34;bpf program is now running&#34;</span>);
-
-getchar();
-<span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
-}
-</code></pre></div><p>As you can see the phases are:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;bpf/libbpf.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;fcntl.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdint.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;unistd.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">*</span>argv[]) {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> bpf_object <span style="color:#f92672">*</span>obj <span style="color:#f92672">=</span> bpf_object__open(<span style="color:#e6db74">&#34;./hello_world.o&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>obj) {
+</span></span><span style="display:flex;"><span>  printf(<span style="color:#e6db74">&#34;failed to open bpf object file, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;created bpf object, %p</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>, obj);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (bpf_object__load(obj)) {
+</span></span><span style="display:flex;"><span>  printf(<span style="color:#e6db74">&#34;failed to load bpf object into kernel.</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;loaded bpf object into kernel</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> bpf_program <span style="color:#f92672">*</span>prog <span style="color:#f92672">=</span> bpf_program__next(NULL, obj);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>prog) {
+</span></span><span style="display:flex;"><span>  printf(<span style="color:#e6db74">&#34;failed to query for bpf program in loaded object</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;extracted bpf program name: %s section name: %s</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>,
+</span></span><span style="display:flex;"><span>       bpf_program__name(prog), bpf_program__section_name(prog));
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> bpf_link <span style="color:#f92672">*</span>link <span style="color:#f92672">=</span> bpf_program__attach(prog);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>link) {
+</span></span><span style="display:flex;"><span>  printf(<span style="color:#e6db74">&#34;failed to attach bpf program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;bpf program is now running&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>getchar();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">return</span> <span style="color:#ae81ff">0</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>As you can see the phases are:</p>
 <ul>
 <li>open: parses the elf object file extracting BPF programs (funcions with a SEC() macro declared above it).</li>
 <li>load: runs each BPF program against the verifier and if it passes loads it into the kernel.</li>
@@ -196,25 +196,25 @@ getchar();
 into another loader program that takes care of the nitty-gritty we
 demonstrated above.</p>
 <p>Run the following command targeting our hello_world.o object file.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">bpftool gen skeleton hello_world.o &gt; hello_world.skel.h
-</code></pre></div><p>You can explore this file yourself, but here is an example
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>bpftool gen skeleton hello_world.o &gt; hello_world.skel.h
+</span></span></code></pre></div><p>You can explore this file yourself, but here is an example
 of using the skeleton to reduce the boilerplate above.</p>
 <p>Copy this code into &ldquo;skeleton_loader.c&rdquo;.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-c" data-lang="c"><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;hello_world.skel.h&#34;</span><span style="color:#75715e">
-</span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
-</span><span style="color:#75715e"></span>
-<span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">**</span>argv) {
-<span style="color:#66d9ef">struct</span> hello_world <span style="color:#f92672">*</span>hw <span style="color:#f92672">=</span> hello_world__open_and_load();
-printf(<span style="color:#e6db74">&#34;created hello_world skeleton program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-
-<span style="color:#66d9ef">int</span> attached <span style="color:#f92672">=</span> hello_world__attach(hw);
-<span style="color:#66d9ef">if</span> (attached) {
-  printf(<span style="color:#e6db74">&#34;failed to attach hello world program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
-}
-printf(<span style="color:#e6db74">&#34;hello world program running&#34;</span>);
-getchar();
-}
-</code></pre></div><p>Nice and simple.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-c" data-lang="c"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&#34;hello_world.skel.h&#34;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;stdio.h&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>(<span style="color:#66d9ef">int</span> argc, <span style="color:#66d9ef">char</span> <span style="color:#f92672">**</span>argv) {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> hello_world <span style="color:#f92672">*</span>hw <span style="color:#f92672">=</span> hello_world__open_and_load();
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;created hello_world skeleton program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> attached <span style="color:#f92672">=</span> hello_world__attach(hw);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> (attached) {
+</span></span><span style="display:flex;"><span>  printf(<span style="color:#e6db74">&#34;failed to attach hello world program</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>printf(<span style="color:#e6db74">&#34;hello world program running&#34;</span>);
+</span></span><span style="display:flex;"><span>getchar();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Nice and simple.</p>
 <h2 id="wrapping-it-up">Wrapping it up</h2>
 <p>It goes without saying, we are only scratching the surface of BPF.</p>
 <p>In subsequent posts I&rsquo;ll be covering mount points, BPF maps, and exposing data

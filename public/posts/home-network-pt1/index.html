@@ -13,7 +13,7 @@
     <nav>
     <ul class="menu">
       
-      <li><a href="/about/">About</a></li>
+      <li><a href="/">Home</a></li>
       
       <li><a href="/posts/">Posts</a></li>
       
@@ -41,36 +41,36 @@ I wanted to put this bad boy to use.</p>
 <li>CoreDNS - a DNS server that uses a ton of plugins to implement name resolution.</li>
 <li>NetData - a C monitoring daemon which scrapes /proc for every metric you can think of.</li>
 <li>Traefik - a service routing solution which supports path routing, redirects, and load balancing.</li>
-<li>Fedora32 - good ol' fedora linux as a host operating system (shameless plug).</li>
+<li>Fedora32 - good ol&rsquo; fedora linux as a host operating system (shameless plug).</li>
 </ul>
 <p>Above is the software stack used in the lab.</p>
 <h2 id="the-network">The Network</h2>
 <p>A typical home network consists of a modem, a router with a built in switch and WiFi, and devices which connect to a local LAN.
 This lab will introduce an additional host for creating and exposing containers.</p>
-<pre><code class="language-console" data-lang="console">+----------+  +--------+
-|  Laptop  |  | Iphone |
-+-----+----+  +---+----+
-    |           |
-    |           |
-    |           |
-    |           |
-+-----+-----------+----+                    +------------------------------+
-|                      |                    |                              |
-| LAN 192.168.185.0/24 |                    |  CONTAINER-LAN 10.89.0.0/24  |
-|                      |                    |                              |
-+---------+------------+                    +-------+----------------------+
-        |                                         |
-        |                                         |
-        | port forward +-----------+              |
-        +--------------+ CONTAINER +--------------+
-        |              +-----^-----+              |
-        |                    | podman run         |
-        |              +-----+-----+              |
-        |              |           |              |
-        +--------------+  CT-HOST  +--------------+
-                       |           |
-                       +-----------+
-</code></pre><p>The network will look like this.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>+----------+  +--------+
+</span></span><span style="display:flex;"><span>|  Laptop  |  | Iphone |
+</span></span><span style="display:flex;"><span>+-----+----+  +---+----+
+</span></span><span style="display:flex;"><span>    |           |
+</span></span><span style="display:flex;"><span>    |           |
+</span></span><span style="display:flex;"><span>    |           |
+</span></span><span style="display:flex;"><span>    |           |
+</span></span><span style="display:flex;"><span>+-----+-----------+----+                    +------------------------------+
+</span></span><span style="display:flex;"><span>|                      |                    |                              |
+</span></span><span style="display:flex;"><span>| LAN 192.168.185.0/24 |                    |  CONTAINER-LAN 10.89.0.0/24  |
+</span></span><span style="display:flex;"><span>|                      |                    |                              |
+</span></span><span style="display:flex;"><span>+---------+------------+                    +-------+----------------------+
+</span></span><span style="display:flex;"><span>        |                                         |
+</span></span><span style="display:flex;"><span>        |                                         |
+</span></span><span style="display:flex;"><span>        | port forward +-----------+              |
+</span></span><span style="display:flex;"><span>        +--------------+ CONTAINER +--------------+
+</span></span><span style="display:flex;"><span>        |              +-----^-----+              |
+</span></span><span style="display:flex;"><span>        |                    | podman run         |
+</span></span><span style="display:flex;"><span>        |              +-----+-----+              |
+</span></span><span style="display:flex;"><span>        |              |           |              |
+</span></span><span style="display:flex;"><span>        +--------------+  CT-HOST  +--------------+
+</span></span><span style="display:flex;"><span>                       |           |
+</span></span><span style="display:flex;"><span>                       +-----------+
+</span></span></code></pre></div><p>The network will look like this.</p>
 <p>CT-HOST is a Fedora32 laptop running Podman and will manage container lifecycles.
 The host resides on two networks: LAN (192.168.185.0/24) where devices communicate and CONTAINER-LAN (10.89.0.0/24) where containers communicate.
 The CONTAINER-LAN is virtual and created by the linux kernel.</p>
@@ -94,42 +94,42 @@ Systemd services can be generated directly from Podman.
 These service files can be used to start the container on boot, restart it on failure, create dependencies between containers, or other facilities Systemd offers.</p>
 <h3 id="coredns-container">CoreDNS Container</h3>
 <p>configuration:</p>
-<pre><code class="language-console" data-lang="console">$ cat Corefile
-.:53 {
-    cache 10
-    forward . 8.8.8.8 9.9.9.9
-    log
-    errors
-}
-
-ldelossa.net {
-    cache 10
-    hosts /etc/coredns/hosts {
-    }
-}
-
-$ cat hosts
-192.168.185.10 traefik.ldelossa.net
-192.168.185.10 ct-host.ldelossa.net
-192.168.185.10 prom.ldelossa.net
-</code></pre><p>CoreDNS with the host plugin uses two configuration files: &ldquo;Corefile&rdquo; and &ldquo;hosts&rdquo; file.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ cat Corefile
+</span></span><span style="display:flex;"><span>.:53 {
+</span></span><span style="display:flex;"><span>    cache 10
+</span></span><span style="display:flex;"><span>    forward . 8.8.8.8 9.9.9.9
+</span></span><span style="display:flex;"><span>    log
+</span></span><span style="display:flex;"><span>    errors
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>ldelossa.net {
+</span></span><span style="display:flex;"><span>    cache 10
+</span></span><span style="display:flex;"><span>    hosts /etc/coredns/hosts {
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">
+</span></span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010"></span>$ cat hosts
+</span></span><span style="display:flex;"><span>192.168.185.10 traefik.ldelossa.net
+</span></span><span style="display:flex;"><span>192.168.185.10 ct-host.ldelossa.net
+</span></span><span style="display:flex;"><span>192.168.185.10 prom.ldelossa.net
+</span></span></code></pre></div><p>CoreDNS with the host plugin uses two configuration files: &ldquo;Corefile&rdquo; and &ldquo;hosts&rdquo; file.</p>
 <p>The &ldquo;Corefile&rdquo; configures Coredns to forward requests not destined for <code>ldelossa.net</code> to Google&rsquo;s DNS and cache the results for a bit.
 Any requests for <code>ldelossa.net</code> are forwarded to the &ldquo;hosts&rdquo; plugin, using the file <code>/etc/coredns/hosts</code>.</p>
 <p>The &ldquo;hosts&rdquo; defines hostname mappings.
 For each entry in this file Coredns will return an A record mapping the hostname to the IP address.</p>
-<pre><code class="language-console" data-lang="console">$ podman create --network ct-host --name coredns -dt -p 192.168.185.10:53:53/tcp -p 192.168.185.10:53:53/udp -v /etc/containers/etc.d/coredns:/etc/coredns coredns/coredns -conf /etc/coredns/Corefile
-</code></pre><p>Above shows the podman command used to create the container.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ podman create --network ct-host --name coredns -dt -p 192.168.185.10:53:53/tcp -p 192.168.185.10:53:53/udp -v /etc/containers/etc.d/coredns:/etc/coredns coredns/coredns -conf /etc/coredns/Corefile
+</span></span></code></pre></div><p>Above shows the podman command used to create the container.</p>
 <p>A few things to note</p>
 <ul>
 <li>Port 53(udp/tcp) is exposed to other devices on LAN via port-forwarding</li>
 <li>Configuration files are mapped from <code>/etc/containers/etc.d/coredns</code> to <code>/etc/coredns</code> inside the container.</li>
 <li>Editing the &ldquo;hosts&rdquo; file on &ldquo;ct-host&rdquo; will reload Coredns without having to restart the container.</li>
 </ul>
-<pre><code class="language-console" data-lang="console">$ podman generate systemd --name coredns &gt; /etc/systemd/system/coredns-container.service
-$ systemctl daemon-reload
-$ systemctl enable coredns-container
-$ systemctl start coredns-container
-</code></pre><p>A SystemD service can be generated and enabled with the commands above.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ podman generate systemd --name coredns &gt; /etc/systemd/system/coredns-container.service
+</span></span><span style="display:flex;"><span>$ systemctl daemon-reload
+</span></span><span style="display:flex;"><span>$ systemctl enable coredns-container
+</span></span><span style="display:flex;"><span>$ systemctl start coredns-container
+</span></span></code></pre></div><p>A SystemD service can be generated and enabled with the commands above.</p>
 <h3 id="configuring-devices">Configuring Devices</h3>
 <p>A typical approach to configuring devices to utilize a custom DNS server would be DHCP.
 Unfortunately my router does not allow the configuration of DHCP (poo-poo to you ampliFi).

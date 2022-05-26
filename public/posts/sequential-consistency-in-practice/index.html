@@ -13,7 +13,7 @@
     <nav>
     <ul class="menu">
       
-      <li><a href="/about/">About</a></li>
+      <li><a href="/">Home</a></li>
       
       <li><a href="/posts/">Posts</a></li>
       
@@ -38,30 +38,30 @@
 <p>You can check out that article <a href="http://space.af/blog/2020/07/16/sequential-consistency-described-by-viotti-and-vukolic/">here</a>, I will expand on it a bit.</p>
 <p>In the article referenced above it&rsquo;s explained that in sequential consistency a processor may view writes of other processors in any interleaving, as long as those interleavings remain in the same order.</p>
 <p>In short recap:</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">        Proc-1   Proc-2
-         W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>     W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
-         W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
-
-
-Valid:  W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
-        W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
-        W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
-
-Invalid:  W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>Y<span style="color:#f92672">)</span>
-</code></pre></div><p>The invalid interleaving is such due to Proc-1&rsquo;s writes happening out of Proc-1&rsquo;s program order.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>        Proc-1   Proc-2
+</span></span><span style="display:flex;"><span>         W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>     W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>         W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Valid:  W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>        W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>        W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Invalid:  W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>Y<span style="color:#f92672">)</span>
+</span></span></code></pre></div><p>The invalid interleaving is such due to Proc-1&rsquo;s writes happening out of Proc-1&rsquo;s program order.</p>
 <h2 id="expanding-on-sequential-consistency">Expanding On Sequential Consistency</h2>
 <p>While the provided definition of sequential consistency is easy to follow for two processors it gets a bit more interesting when we model a distributed system.</p>
 <p>In our distributed system two processes will be issuing writes to a shared register and two other processes will be observing those writes and then issuing a read.</p>
 <p>Each process is to obey sequential consistency.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">        Proc-1      Proc-2
-         W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>        W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
-         W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
-
-
-Proc-3 Observes: W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>, R<span style="color:#f92672">()</span> <span style="color:#f92672">=</span>&gt; y
-
-Proc-4 Observes: W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>, R<span style="color:#f92672">()</span> <span style="color:#f92672">=</span>&gt; z
-</code></pre></div><p>Here we notice that Proc-3 and Proc-4 do not agree on the shared register&rsquo;s value, yet this is legal in sequential consistency.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>        Proc-1      Proc-2
+</span></span><span style="display:flex;"><span>         W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>        W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>         W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Proc-3 Observes: W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>, R<span style="color:#f92672">()</span> <span style="color:#f92672">=</span>&gt; y
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>Proc-4 Observes: W<span style="color:#f92672">(</span>y<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>x<span style="color:#f92672">)</span>,W<span style="color:#f92672">(</span>z<span style="color:#f92672">)</span>, R<span style="color:#f92672">()</span> <span style="color:#f92672">=</span>&gt; z
+</span></span></code></pre></div><p>Here we notice that Proc-3 and Proc-4 do not agree on the shared register&rsquo;s value, yet this is legal in sequential consistency.</p>
 <p>As you can imagine, in practice this is not the desired behavior.</p>
 <h2 id="sequential-consistency-in-practice">Sequential Consistency In Practice</h2>
 <p>In order for sequential consistency to be useful in a distributed system another mechanism must be provided to ensure all processes see the <strong>same</strong> interleaving of operations.</p>

@@ -13,7 +13,7 @@
     <nav>
     <ul class="menu">
       
-      <li><a href="/about/">About</a></li>
+      <li><a href="/">Home</a></li>
       
       <li><a href="/posts/">Posts</a></li>
       
@@ -45,141 +45,141 @@ A request object with a response channel is pushed onto a request channel.
 When the receiver gets the request it writes to the response channel, unblocking any client listening.</p>
 <p>This pattern is useful but will also alloc a lot of channels resulting in bloating the heap.</p>
 <p>To demonstrate this a benchmark will be taken that profiles lock acquisition and lock return.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ go test -benchtime <span style="color:#e6db74">&#34;1m&#34;</span>  -run xxx -bench . -memprofile memprofile.out -cpuprofile cpuprofile.out
-</code></pre></div><p>The command above runs a 1 minute benchmark profiling both memory and cpu.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ go test -benchtime <span style="color:#e6db74">&#34;1m&#34;</span>  -run xxx -bench . -memprofile memprofile.out -cpuprofile cpuprofile.out
+</span></span></code></pre></div><p>The command above runs a 1 minute benchmark profiling both memory and cpu.</p>
 <p>Next lets start an interactive pprof session over the memory profile and drill into the function where the channel allocations are occuring.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">$ go tool pprof distlock.test memprofile.out
-
-<span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
-Total: 194.36MB
-ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
-    20MB       20MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span> 10.29% of Total
-       .          .     78: <span style="color:#f92672">}</span>
-       .          .     79:
-       .          .     80: req :<span style="color:#f92672">=</span> request<span style="color:#f92672">{</span>
-       .          .     81:     t:        Lock,
-       .          .     82:	    key:      key,
- 13.50MB    13.50MB     83:		respChan: make<span style="color:#f92672">(</span>chan response<span style="color:#f92672">)</span>,
-       .          .     84:	<span style="color:#f92672">}</span>
-       .          .     85:
-       .          .     86:	// guaranteed to <span style="color:#66d9ef">return</span>
-       .          .     87:	resp :<span style="color:#f92672">=</span> m.g.request<span style="color:#f92672">(</span>req<span style="color:#f92672">)</span>
-       .          .     88:
-       .          .     89:	<span style="color:#66d9ef">if</span> !resp.ok <span style="color:#f92672">{</span>
-       .          .     90:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
-       .          .     91:	<span style="color:#f92672">}</span>
-       .          .     92:
-       .          .     93:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
-       .          .     94:
-  6.50MB     6.50MB     95:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
-       .          .     96:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
-       .          .     97:	<span style="color:#f92672">}</span>
-       .          .     98:<span style="color:#f92672">}</span>
-       .          .     99:
-       .          .    100:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-</code></pre></div><p>Above illustrates 13.50MB of heap memory is spent on allocating request objects and their response channels.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>$ go tool pprof distlock.test memprofile.out
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
+</span></span><span style="display:flex;"><span>Total: 194.36MB
+</span></span><span style="display:flex;"><span>ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
+</span></span><span style="display:flex;"><span>    20MB       20MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span> 10.29% of Total
+</span></span><span style="display:flex;"><span>       .          .     78: <span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     79:
+</span></span><span style="display:flex;"><span>       .          .     80: req :<span style="color:#f92672">=</span> request<span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       .          .     81:     t:        Lock,
+</span></span><span style="display:flex;"><span>       .          .     82:	    key:      key,
+</span></span><span style="display:flex;"><span> 13.50MB    13.50MB     83:		respChan: make<span style="color:#f92672">(</span>chan response<span style="color:#f92672">)</span>,
+</span></span><span style="display:flex;"><span>       .          .     84:	<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     85:
+</span></span><span style="display:flex;"><span>       .          .     86:	// guaranteed to <span style="color:#66d9ef">return</span>
+</span></span><span style="display:flex;"><span>       .          .     87:	resp :<span style="color:#f92672">=</span> m.g.request<span style="color:#f92672">(</span>req<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>       .          .     88:
+</span></span><span style="display:flex;"><span>       .          .     89:	<span style="color:#66d9ef">if</span> !resp.ok <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       .          .     90:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>       .          .     91:	<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     92:
+</span></span><span style="display:flex;"><span>       .          .     93:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>       .          .     94:
+</span></span><span style="display:flex;"><span>  6.50MB     6.50MB     95:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       .          .     96:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>       .          .     97:	<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     98:<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     99:
+</span></span><span style="display:flex;"><span>       .          .    100:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span></code></pre></div><p>Above illustrates 13.50MB of heap memory is spent on allocating request objects and their response channels.</p>
 <p>We can introduce an object pool to promote the reuse of these channels.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">reqPool</span> <span style="color:#66d9ef">struct</span> {
-	<span style="color:#a6e22e">c</span> <span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>
-}
-
-<span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewReqPool</span>(<span style="color:#a6e22e">seed</span> <span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span> {
-	<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>, <span style="color:#a6e22e">seed</span><span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
-	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">seed</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
-		<span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
-		<span style="color:#66d9ef">select</span> {
-		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
-		<span style="color:#66d9ef">default</span>:
-
-		}
-	}
-	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">reqPool</span>{<span style="color:#a6e22e">c</span>}
-}
-
-<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Get</span>() <span style="color:#a6e22e">request</span> {
-	<span style="color:#66d9ef">select</span> {
-	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span>:
-		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>
-	<span style="color:#66d9ef">default</span>:
-		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
-	}
-}
-
-<span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">request</span>) {
-	<span style="color:#66d9ef">select</span> {
-	<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">respChan</span>:
-	<span style="color:#66d9ef">default</span>:
-	}
-	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">key</span> = <span style="color:#e6db74">&#34;&#34;</span>
-	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">t</span> = <span style="color:#a6e22e">Invalid</span>
-	<span style="color:#66d9ef">select</span> {
-	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
-	}
-}
-</code></pre></div><p>The above illustrates a simple channel implemented pool.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">reqPool</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span> <span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NewReqPool</span>(<span style="color:#a6e22e">seed</span> <span style="color:#66d9ef">int</span>) <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">c</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">request</span>, <span style="color:#a6e22e">seed</span><span style="color:#f92672">*</span><span style="color:#ae81ff">2</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>; <span style="color:#a6e22e">i</span> &lt; <span style="color:#a6e22e">seed</span>; <span style="color:#a6e22e">i</span><span style="color:#f92672">++</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">reqPool</span>{<span style="color:#a6e22e">c</span>}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Get</span>() <span style="color:#a6e22e">request</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">r</span> <span style="color:#f92672">:=</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">r</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">request</span>{<span style="color:#a6e22e">respChan</span>: make(<span style="color:#66d9ef">chan</span> <span style="color:#a6e22e">response</span>)}
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">p</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">reqPool</span>) <span style="color:#a6e22e">Put</span>(<span style="color:#a6e22e">r</span> <span style="color:#a6e22e">request</span>) {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">case</span> <span style="color:#f92672">&lt;-</span><span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">respChan</span>:
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">default</span>:
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">key</span> = <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">r</span>.<span style="color:#a6e22e">t</span> = <span style="color:#a6e22e">Invalid</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">select</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">case</span> <span style="color:#a6e22e">p</span>.<span style="color:#a6e22e">c</span> <span style="color:#f92672">&lt;-</span> <span style="color:#a6e22e">r</span>:
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>The above illustrates a simple channel implemented pool.
 The first implementation was a sync.Pool.
 After further profiling however implementing our own proved to be easier on the heap.</p>
 <p>After plumbing the requst pool into the rest of the code pprof reports a much nicer result.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
-Total: 80.06MB
-ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
-     1MB        1MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span>  1.25% of Total
-       .          .     89:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
-       .          .     90:	<span style="color:#f92672">}</span>
-       .          .     91:
-       .          .     92:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
-       .          .     93:
-     1MB        1MB     94:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
-       .          .     95:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
-       .          .     96:	<span style="color:#f92672">}</span>
-       .          .     97:<span style="color:#f92672">}</span>
-       .          .     98:
-       .          .     99:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
-</code></pre></div><h2 id="a-pgx-trick">A PGX Trick</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#f92672">(</span>pprof<span style="color:#f92672">)</span> list <span style="color:#ae81ff">\.</span>Lock
+</span></span><span style="display:flex;"><span>Total: 80.06MB
+</span></span><span style="display:flex;"><span>ROUTINE <span style="color:#f92672">========================</span> github.com/ldelossa/distlock.<span style="color:#f92672">(</span>*Manager<span style="color:#f92672">)</span>.Lock in /home/louis/git/go/distlock/manager.go
+</span></span><span style="display:flex;"><span>     1MB        1MB <span style="color:#f92672">(</span>flat, cum<span style="color:#f92672">)</span>  1.25% of Total
+</span></span><span style="display:flex;"><span>       .          .     89:		<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{}</span>
+</span></span><span style="display:flex;"><span>       .          .     90:	<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     91:
+</span></span><span style="display:flex;"><span>       .          .     92:	m.propagateCancel<span style="color:#f92672">(</span>ctx, resp.ctx, key<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>       .          .     93:
+</span></span><span style="display:flex;"><span>     1MB        1MB     94:	<span style="color:#66d9ef">return</span> resp.ctx, func<span style="color:#f92672">()</span> <span style="color:#f92672">{</span>
+</span></span><span style="display:flex;"><span>       .          .     95:		m.unlock<span style="color:#f92672">(</span>key<span style="color:#f92672">)</span>
+</span></span><span style="display:flex;"><span>       .          .     96:	<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     97:<span style="color:#f92672">}</span>
+</span></span><span style="display:flex;"><span>       .          .     98:
+</span></span><span style="display:flex;"><span>       .          .     99:func <span style="color:#f92672">(</span>m *Manager<span style="color:#f92672">)</span> propagateCancel<span style="color:#f92672">(</span>parent context.Context, child context.Context, key string<span style="color:#f92672">)</span> <span style="color:#f92672">{</span>
+</span></span></code></pre></div><h2 id="a-pgx-trick">A PGX Trick</h2>
 <p>Removing the cost of the response-request model was a good win but there is still more to tune.</p>
 <p>Lets generate a graph of our call stack and associated allocations.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell">❯ go tool pprof -svg distlock.test memprofile.out
-</code></pre></div><p><img src="/profile001.png" alt="photo of high PGX allocations"></p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span>❯ go tool pprof -svg distlock.test memprofile.out
+</span></span></code></pre></div><p><img src="/profile001.png" alt="photo of high PGX allocations"></p>
 <p>The above diagram is showing a large amount of allocations in PGX&rsquo;s getRows method.
 Its not rare for methods dealing with serialization to and from the database to allocate heavily.
 But it would be nice if we could eliminate this.</p>
 <p>Getting a session pg advisory lock typically looks like this.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">SELECT</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
-<span style="color:#66d9ef">SELECT</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
-</code></pre></div><p>Both lock functions return a table expression resulting in a true or a false.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>);
+</span></span></code></pre></div><p>Both lock functions return a table expression resulting in a true or a false.</p>
 <p>An optimization we can make is changing these queries to only return a row if the lock function returns true.
 Our application logic can then simply check whether any rows are returned and not read the contents.</p>
 <p>First lets fix our queries.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-sql" data-lang="sql"><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
-<span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
-</code></pre></div><p>A slight modification allows us to only return rows if the lock function returns true.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_try_advisory_lock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">FROM</span> pg_advisory_unlock(<span style="color:#960050;background-color:#1e0010">$</span><span style="color:#ae81ff">1</span>) <span style="color:#66d9ef">lock</span> <span style="color:#66d9ef">WHERE</span> <span style="color:#66d9ef">lock</span> <span style="color:#f92672">=</span> <span style="color:#66d9ef">true</span>;
+</span></span></code></pre></div><p>A slight modification allows us to only return rows if the lock function returns true.</p>
 <p>The next step is to short circuit the PGX library from reading the rows.
 This took a bit of library spelunking but I eventually discovered this&hellip;</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-go" data-lang="go"><span style="color:#a6e22e">rr</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">PgConn</span>().<span style="color:#a6e22e">ExecParams</span>(<span style="color:#a6e22e">ctx</span>,
-  <span style="color:#a6e22e">trySessionUnlock</span>,
-  [][]<span style="color:#66d9ef">byte</span>{
-      <span style="color:#a6e22e">keyify</span>(<span style="color:#a6e22e">key</span>),
-  },
-  <span style="color:#66d9ef">nil</span>,
-  []<span style="color:#66d9ef">int16</span>{<span style="color:#ae81ff">1</span>},
-  <span style="color:#66d9ef">nil</span>)
-<span style="color:#a6e22e">tag</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rr</span>.<span style="color:#a6e22e">Close</span>()
-<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
-  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>}
-}
-<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">tag</span>.<span style="color:#a6e22e">RowsAffected</span>() <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
-  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;unlock of key %s returned false&#34;</span>, <span style="color:#a6e22e">key</span>)}
-}
-</code></pre></div><p>By using the lower level PgConn object we can exec our queries, get a response writer, and immediately close it to obtain the command tag.
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">rr</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">m</span>.<span style="color:#a6e22e">conn</span>.<span style="color:#a6e22e">PgConn</span>().<span style="color:#a6e22e">ExecParams</span>(<span style="color:#a6e22e">ctx</span>,
+</span></span><span style="display:flex;"><span>  <span style="color:#a6e22e">trySessionUnlock</span>,
+</span></span><span style="display:flex;"><span>  [][]<span style="color:#66d9ef">byte</span>{
+</span></span><span style="display:flex;"><span>      <span style="color:#a6e22e">keyify</span>(<span style="color:#a6e22e">key</span>),
+</span></span><span style="display:flex;"><span>  },
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">nil</span>,
+</span></span><span style="display:flex;"><span>  []<span style="color:#66d9ef">int16</span>{<span style="color:#ae81ff">1</span>},
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">nil</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">tag</span>, <span style="color:#a6e22e">err</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rr</span>.<span style="color:#a6e22e">Close</span>()
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">err</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">err</span>}
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#a6e22e">tag</span>.<span style="color:#a6e22e">RowsAffected</span>() <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> <span style="color:#a6e22e">response</span>{<span style="color:#66d9ef">false</span>, <span style="color:#66d9ef">nil</span>, <span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Errorf</span>(<span style="color:#e6db74">&#34;unlock of key %s returned false&#34;</span>, <span style="color:#a6e22e">key</span>)}
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>By using the lower level PgConn object we can exec our queries, get a response writer, and immediately close it to obtain the command tag.
 The command tag tells us if any rows were affected by the exec. This effectively tells us whether the lock was obtained or not in a somewhat indirect way.</p>
 <p>Let&rsquo;s take a new 1 minute memory profile to see how this effects our heap.</p>
 <p><img src="/profile002.png" alt="photo of high PGX allocations"></p>
 <p>Notice the large improvement achieved.</p>
 <p>We can also compare the benchmark output.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#ae81ff">85149</span>            <span style="color:#ae81ff">890605</span> ns/op            <span style="color:#ae81ff">1288</span> B/op         <span style="color:#ae81ff">21</span> allocs/op
-</code></pre></div><p>Where PGX was reading the rows.</p>
-<div class="highlight"><pre style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4"><code class="language-shell" data-lang="shell"><span style="color:#ae81ff">58051</span>           <span style="color:#ae81ff">1238353</span> ns/op             <span style="color:#ae81ff">517</span> B/op         <span style="color:#ae81ff">11</span> allocs/op
-</code></pre></div><p>By eliminating the reading of rows we perform many more cycles and cut our allocation in roughly half.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#ae81ff">85149</span>            <span style="color:#ae81ff">890605</span> ns/op            <span style="color:#ae81ff">1288</span> B/op         <span style="color:#ae81ff">21</span> allocs/op
+</span></span></code></pre></div><p>Where PGX was reading the rows.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-shell" data-lang="shell"><span style="display:flex;"><span><span style="color:#ae81ff">58051</span>           <span style="color:#ae81ff">1238353</span> ns/op             <span style="color:#ae81ff">517</span> B/op         <span style="color:#ae81ff">11</span> allocs/op
+</span></span></code></pre></div><p>By eliminating the reading of rows we perform many more cycles and cut our allocation in roughly half.</p>
 <h2 id="disclaimer-on-optimization">Disclaimer on optimization</h2>
 <p>Is it worth to dig this deep into your allocations? Depends.
 If you know the code you are writing will be in the &ldquo;hot-path&rdquo; its empowering to know what your allocation profile looks like.
