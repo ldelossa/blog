@@ -6,7 +6,8 @@ another branch you were working on.</p><p>This allows seamless integration with 
 review to make updates to the code in a natural way.</p><p>In order to do this, <code>gh.nvim</code> utilizes both the <code>gh</code> and <code>git</code> CLI tools extensively.</p><p>When <code>gh.nvim</code> opens a pull request it add the pull&rsquo;s remote to the local git
 repository, fetch the branch, and check it out. As you browse the code within
 <code>gh.nvim</code> the plugin will be checking out commits as you do. This allows you to
-visualize, run, debug, and inspect the code locally at every commit.</p><h1 id=getting-started>Getting started</h1><h2 id=cli-dependencies>CLI dependencies</h2><p><code>gh.nvim</code> requires two external CLI tools to work.</p><ul><li><code>gh</code> - <a href=https://cli.github.com/>https://cli.github.com/</a></li><li><code>git</code> - <a href=https://git-scm.com/docs/gitcli>https://git-scm.com/docs/gitcli</a></li></ul><p>Ensure that the <code>gh</code> tool is configured to use the correct <code>git_protocol</code> for
+visualize, run, debug, and inspect the code locally at every commit.</p><p>This blog post will be a constant &ldquo;WIP&rdquo; as features are added and shift around
+during development. <code>gh.nvim</code> is new and has not reached a stable release yet.</p><h1 id=getting-started>Getting started</h1><h2 id=cli-dependencies>CLI dependencies</h2><p><code>gh.nvim</code> requires two external CLI tools to work.</p><ul><li><code>gh</code> - <a href=https://cli.github.com/>https://cli.github.com/</a></li><li><code>git</code> - <a href=https://git-scm.com/docs/gitcli>https://git-scm.com/docs/gitcli</a></li></ul><p>Ensure that the <code>gh</code> tool is configured to use the correct <code>git_protocol</code> for
 your usage. The <code>git_protocol</code> can be either &ldquo;https&rdquo; or &ldquo;ssh&rdquo;.
 If &ldquo;ssh&rdquo; is used ensure that your ssh-agent has the correct public keys added
 and is configured correctly. This is important since <code>gh.nvim</code> must pull the
@@ -20,7 +21,18 @@ and can display multiple tools at once.</p><p>This allows <code>gh.nvim</code> t
 like all the other plugins. If you&rsquo;re looking at <code>gh.nvim</code> and wondering
 &ldquo;how can I make the panel open on the top instead of right&rdquo; then you&rsquo;ll want to
 look at <code>litee.nvim</code>&rsquo;s configuration. Maybe a little confusing, but this allows
-the panel code to be shared between multiple plugins.</p><h1 id=working-with-pull-requests>Working with pull requests</h1><h2 id=opening-a-pull-request>Opening a Pull Request</h2><p>A pull request can be opened with &ldquo;GHOpenPR&rdquo;.</p><p>If no PR number is provided a <code>vim.ui.select</code> dialogue is presented.</p><p>Typically, telescope and fzf.lua will override this providing a fuzzy searcher
+the panel code to be shared between multiple plugins.</p><h2 id=configuration>Configuration</h2><p>For full configuration details you&rsquo;ll want to check out the plugin&rsquo;s docs using
+(:h gh.nvim).</p><p>At a minimum, you must call <code>litee.nvim</code>&rsquo;s setup function followed by <code>gh.nvim</code>&rsquo;s.</p><p>A configuration which utilizes all the defaults would be:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-lua data-lang=lua><span style=display:flex><span>require(<span style=color:#e6db74>&#39;litee.lib&#39;</span>).setup({
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- this is where you configure details about your panel, such as </span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- whether it toggles on the left, right, top, or bottom.</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- leaving this blank will use the defaults.</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- reminder: gh.nvim uses litee.lib to implement core portions of its UI.</span>
+</span></span><span style=display:flex><span>})
+</span></span><span style=display:flex><span>require(<span style=color:#e6db74>&#39;litee.gh&#39;</span>).setup({
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- this is where you configure details about gh.nvim directly relating</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>-- to GitHub integration.</span>
+</span></span><span style=display:flex><span>})
+</span></span></code></pre></div><p>Place the following function calls anywhere you setup your <code>neovim</code> plugins.</p><h1 id=working-with-pull-requests>Working with pull requests</h1><h2 id=opening-a-pull-request>Opening a Pull Request</h2><p>A pull request can be opened with &ldquo;GHOpenPR&rdquo;.</p><p>If no PR number is provided a <code>vim.ui.select</code> dialogue is presented.</p><p>Typically, telescope and fzf.lua will override this providing a fuzzy searcher
 of the PRs.</p><p><img src=/ghopenpr.gif alt=GHOpenPR></p><h2 id=browsing-commits>Browsing Commits</h2><p>Once a PR is opened the PR panel will toggle itself visible.</p><p>Within this panel there will be a &ldquo;commits&rdquo; tree.</p><p>By hitting (default) &lt;CR> on a commit object the &ldquo;Commits&rdquo; panel will now open
 and <code>gh.nvim</code>&rsquo;s diff-view will be presented with the first changed file of that commit.
 The underlying filesystem is also checked out to this commit so that running the
