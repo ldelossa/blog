@@ -27,6 +27,9 @@ repository, fetch the branch, and check it out. As you browse the code within
 `gh.nvim` the plugin will be checking out commits as you do. This allows you to 
 visualize, run, debug, and inspect the code locally at every commit.
 
+This blog post will be a constant "WIP" as features are added and shift around
+during development. `gh.nvim` is new and has not reached a stable release yet.
+
 # Getting started
 
 ## CLI dependencies
@@ -62,6 +65,29 @@ like all the other plugins. If you're looking at `gh.nvim` and wondering
 "how can I make the panel open on the top instead of right" then you'll want to 
 look at `litee.nvim`'s configuration. Maybe a little confusing, but this allows 
 the panel code to be shared between multiple plugins. 
+
+## Configuration
+
+For full configuration details you'll want to check out the plugin's docs using
+(:h gh.nvim). 
+
+At a minimum, you must call `litee.nvim`'s setup function followed by `gh.nvim`'s.
+
+A configuration which utilizes all the defaults would be:
+
+```lua
+require('litee.lib').setup({
+    -- this is where you configure details about your panel, such as 
+    -- whether it toggles on the left, right, top, or bottom.
+    -- leaving this blank will use the defaults.
+    -- reminder: gh.nvim uses litee.lib to implement core portions of its UI.
+})
+require('litee.gh').setup({
+    -- this is where you configure details about gh.nvim directly relating
+    -- to GitHub integration.
+})
+```
+Place the following function calls anywhere you setup your `neovim` plugins.
 
 # Working with pull requests
 
