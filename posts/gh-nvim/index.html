@@ -1,0 +1,54 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>The gh.nvim guide | a.programming.blog</title><link rel=stylesheet href=/css/style.css><link rel=stylesheet href=/css/fonts.css></head><body><nav><ul class=menu><li><a href=/>Home</a></li><li><a href=/posts/>Posts</a></li></ul><hr></nav><div class=article-meta><h1><span class=title>The gh.nvim guide</span></h1><h2 class=date>2022/05/26</h2></div><main><h1 id=introducing-ghnvim>Introducing gh.nvim</h1><p><code>gh.nvim</code> is a tool for working with the GitHub platform through Neovim.</p><p>It was developed to alleviate the need to jump between editor and browser and
+because its author felt performing code reviews should be done inside the editor
+where all your language inspection tools exist.</p><p><code>gh.nvim</code> is a bit different then other GitHub plugins because it favors
+bringing all the code to your local machine and editing it as if it was just
+another branch you were working on.</p><p>This allows seamless integration with LSP tools inside the editor and allows the
+review to make updates to the code in a natural way.</p><p>In order to do this, <code>gh.nvim</code> utilizes both the <code>gh</code> and <code>git</code> CLI tools extensively.</p><p>When <code>gh.nvim</code> opens a pull request it add the pull&rsquo;s remote to the local git
+repository, fetch the branch, and check it out. As you browse the code within
+<code>gh.nvim</code> the plugin will be checking out commits as you do. This allows you to
+visualize, run, debug, and inspect the code locally at every commit.</p><h1 id=getting-started>Getting started</h1><h2 id=cli-dependencies>CLI dependencies</h2><p><code>gh.nvim</code> requires two external CLI tools to work.</p><ul><li><code>gh</code> - <a href=https://cli.github.com/>https://cli.github.com/</a></li><li><code>git</code> - <a href=https://git-scm.com/docs/gitcli>https://git-scm.com/docs/gitcli</a></li></ul><p>Ensure that the <code>gh</code> tool is configured to use the correct <code>git_protocol</code> for
+your usage. The <code>git_protocol</code> can be either &ldquo;https&rdquo; or &ldquo;ssh&rdquo;.
+If &ldquo;ssh&rdquo; is used ensure that your ssh-agent has the correct public keys added
+and is configured correctly. This is important since <code>gh.nvim</code> must pull the
+code locally and will fail if the correct protocols are not being used.</p><p>When <code>gh.nvim</code> opens a timer is started. This timer will perform no action until
+an issue or a pull request is opened (so don&rsquo;t worry if you see this when you
+don&rsquo;t plan on using <code>gh.nvim</code> at the moment).</p><h2 id=liteenvim>litee.nvim</h2><p><code>gh.nvim</code> is implemented with help of <a href=https://github.com/ldelossa/litee.nvim>litee.nvim</a>
+and is a Neovim plugin depedency. It must be installed for <code>gh.nvim</code> to work.</p><p><code>litee.nvim</code> provides the implementation of a unified &ldquo;panel&rdquo; similar to VSCode&rsquo;s
+and JetBrains panels. These panels allow components to be &ldquo;registered&rdquo; into them
+and can display multiple tools at once.</p><p>This allows <code>gh.nvim</code> to work along side other <code>litee.nvim</code> plugins such as
+<a href=https://github.com/ldelossa/litee-calltree.nvim>litee-calltree.nvim</a> and others.</p><p>Therefore, <code>gh.nvim</code>&rsquo;s panel is configured via <code>litee.nvim</code>&rsquo;s configuration, just
+like all the other plugins. If you&rsquo;re looking at <code>gh.nvim</code> and wondering
+&ldquo;how can I make the panel open on the top instead of right&rdquo; then you&rsquo;ll want to
+look at <code>litee.nvim</code>&rsquo;s configuration. Maybe a little confusing, but this allows
+the panel code to be shared between multiple plugins.</p><h1 id=working-with-pull-requests>Working with pull requests</h1><h2 id=opening-a-pull-request>Opening a Pull Request</h2><p>A pull request can be opened with &ldquo;GHOpenPR&rdquo;.</p><p>If no PR number is provided a <code>vim.ui.select</code> dialogue is presented.</p><p>Typically, telescope and fzf.lua will override this providing a fuzzy searcher
+of the PRs.</p><p><img src=/ghopenpr.gif alt=GHOpenPR></p><h2 id=browsing-commits>Browsing Commits</h2><p>Once a PR is opened the PR panel will toggle itself visible.</p><p>Within this panel there will be a &ldquo;commits&rdquo; tree.</p><p>By hitting (default) &lt;CR> on a commit object the &ldquo;Commits&rdquo; panel will now open
+and <code>gh.nvim</code>&rsquo;s diff-view will be presented with the first changed file of that commit.
+The underlying filesystem is also checked out to this commit so that running the
+code locally produces the exact functionality of the code at this commit.</p><p>You can access the commit message by pressing (default) &ldquo;d&rdquo; on the commit node
+in the tree.</p><p><img src=/ghcommit.gif alt=GHCommit></p><h2 id=browsing-files-changed>Browsing files changed</h2><p>If you prefer to browse at a higher level, a &ldquo;Files Changed&rdquo; tree exists as well.</p><p>Anytime a file is opened the underlying repo is checked out to the HEAD of the
+pull request, providing an aggregated diff view of what has changed in the pull
+request.</p><p><img src=/ghfileschanged.gif alt=GHFilesChanged></p><h2 id=working-with-review-comments>Working with review comments</h2><p>The &ldquo;Conversation&rdquo; tree holds threads of conversations about areas of the code.</p><p>By hitting (default) &lt;CR> on a thread node the diffview will be toggled open and
+the thread will be displayed on the opposite side in which the thread refers to.</p><p>From there you can use the opened thread window to perform actions on the
+conversation. By default &lt;Ctrl-a> will open an actions dialogue when your cursor
+is on top of a comment and &lt;Ctrl-s> will submit any text you&rsquo;ve typed in the bottom
+text area.</p><p>You can close the thread window by issuing &ldquo;GHToggleThread&rdquo; on the same line as
+the open thread or on a blank line.</p><p>If multiple threads exist on a line you can use &ldquo;GHNextThread&rdquo; to cycle through
+them.</p><p>You can create your own thread on any line with a &ldquo;+&rdquo; sign in the sign column,
+using &ldquo;GHCreateThread&rdquo;</p><p>You may hit (default) &lt;Ctrl-r> to resolve the thread if you have permissions to
+do so.</p><p><img src=/ghthreads.gif alt=GHThreads></p><h2 id=working-with-pull-request-comments>Working with pull request comments</h2><p>Pull request comments are separate from review comments. Pull request comments
+are not affiliated with a file diff.</p><p>When the PR is initially opened an issue buffer is opened with the pull request&rsquo;s
+comments.</p><p>This buffer works just like the above thread buffer except you cannot resolve a
+issue buffer.</p><p>If the issue buffer isn&rsquo;t present you can hit (default) &lt;CR> on the root PR node
+to open it in a new tab.</p><p><img src=/ghprissues.gif alt=GHPRIssues></p><h2 id=working-with-reviews>Working with Reviews</h2><h3 id=starting-and-submitting-a-review>Starting and submitting a review</h3><p>A review can be started with the &ldquo;GHStartReview&rdquo;. When this command completes
+a new tree will appear indicating a pending review is in progress.</p><p>From this point on every thread comment that is made is made in &ldquo;pending&rdquo; state
+which is also indicated in the conversations panel.</p><p>If you close <code>neovim</code>, re-open it, and open the PR you&rsquo;ll be placed back into
+your pending review. If you want to cancel the review use &ldquo;GHDeleteReview&rdquo;. This
+will drop any pending comments and remove the pending review state.</p><p>Once you&rsquo;ve created all your comments you can use the &ldquo;GHSubmitReview&rdquo; command
+to submit it.</p><p><img src=/ghreviews.gif alt=GHOReviews></p><h3 id=browsing-by-review-comment>Browsing by review comment</h3><p>Submitted reviews can be opened with (default) &lt;CR> in a new &ldquo;Reviews&rdquo; panel.
+This panel aggregates review comments, further organizing threaded comments by
+reviews.</p><h2 id=working-with-issues>Working with Issues</h2><p>Issues can be previewed, opened, commented on, and browsed.</p><p>The &ldquo;GHOpenIssue&rdquo; command works similarly to the &ldquo;GHOpenPR&rdquo; command. If no number
+is provided to it, it will open a <code>vim.ui.select</code> dialogue.</p><p>Once an issue buffer is opened the buffer works exactly like the pull request
+issue buffer we introduced earlier.</p><p>Placing the cursor over any &ldquo;#1234&rdquo; formatted string will open a preview popup
+of that issue and by default the keybinding &ldquo;gd&rdquo; will open the issue under the
+cursor.</p><p>Issues are independent of a pull request being opened and are their own feature
+in <code>gh.nvim</code>.</p><p><img src=/ghissues.gif alt=GHOpenIssue></p></main><footer></footer></body></html>
