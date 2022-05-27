@@ -187,7 +187,7 @@ will drop any pending comments and remove the pending review state.
 Once you've created all your comments you can use the "GHSubmitReview" command 
 to submit it.
 
-![GHOReviews](/ghreviews.gif)
+![GHReviews](/ghreviews.gif)
 
 ### Browsing by review comment
 
@@ -213,3 +213,17 @@ Issues are independent of a pull request being opened and are their own feature
 in `gh.nvim`.
 
 ![GHOpenIssue](/ghissues.gif)
+
+## Completion
+
+`gh.nvim` provides a completion function for auto-completing usernames and 
+issues.
+
+The completion is automatically registered in thread and issue buffers and can
+optionally be registered in buffers with the "./git" string in their names. The
+latter being useful if you use `neovim` as your `git` editor.
+
+The completion function is registered to omnifunc with the default keybindings
+being \<C-x\>\<C-o\>.
+
+![GHCompletion](/ghcompletion.gif)
