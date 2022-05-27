@@ -34,6 +34,10 @@ There are several plugins reachable from the above link's readme.
 
 Most plugins deal with porting over feature present in VSCode that Neovim lacks.
 
+## [gh.nvim](https://github.com/ldelossa/gh.nvim)
+
+A fully featured GitHub integration for Neovim utilizing the `litee.nvim` framework.
+
 ## [sway-fzfify](https://github.com/ldelossa/sway-fzfify)
 
 A set of scripts I use daily in coordination with the Sway window manager.
