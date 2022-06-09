@@ -61,10 +61,10 @@ a new tree will appear indicating a pending review is in progress.</p><p>From th
 which is also indicated in the conversations panel.</p><p>If you close <code>neovim</code>, re-open it, and open the PR you&rsquo;ll be placed back into
 your pending review. If you want to cancel the review use &ldquo;GHDeleteReview&rdquo;. This
 will drop any pending comments and remove the pending review state.</p><p>Once you&rsquo;ve created all your comments you can use the &ldquo;GHSubmitReview&rdquo; command
-to submit it.</p><h3 id=listing-requested-reviews>Listing requested reviews</h3><p>The &ldquo;GHRequestedReview&rdquo; command can be used to list pull requests your username
+to submit it.</p><p><img src=/ghreviews.gif alt=GHReviews></p><h3 id=listing-requested-reviews>Listing requested reviews</h3><p>The &ldquo;GHRequestedReview&rdquo; command can be used to list pull requests your username
 has explicitly been requested to review.</p><h3 id=listing-recently-reviewed-pull-requests>Listing recently reviewed pull requests</h3><p>The &ldquo;GHRequestedReview&rdquo; command will only show pull requests you&rsquo;ve been requested
 to review, and once you&rsquo;ve submitted a review, it will no longer list the reviewed PR.</p><p>To list pull requests you&rsquo;ve recently reviewed but are still open you may use the
-&ldquo;GHReviewed&rdquo; command.</p><p><img src=/ghreviews.gif alt=GHReviews></p><h3 id=browsing-by-review-comment>Browsing by review comment</h3><p>Submitted reviews can be opened with (default) &lt;CR> in a new &ldquo;Reviews&rdquo; panel.
+&ldquo;GHReviewed&rdquo; command.</p><h3 id=browsing-by-review-comment>Browsing by review comment</h3><p>Submitted reviews can be opened with (default) &lt;CR> in a new &ldquo;Reviews&rdquo; panel.
 This panel aggregates review comments, further organizing threaded comments by
 reviews.</p><h2 id=working-with-issues>Working with Issues</h2><p>Issues can be previewed, opened, commented on, and browsed.</p><p>The &ldquo;GHOpenIssue&rdquo; command works similarly to the &ldquo;GHOpenPR&rdquo; command. If no number
 is provided to it, it will open a <code>vim.ui.select</code> dialogue.</p><p>Once an issue buffer is opened the buffer works exactly like the pull request
