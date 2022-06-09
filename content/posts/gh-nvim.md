@@ -202,6 +202,8 @@ will drop any pending comments and remove the pending review state.
 Once you've created all your comments you can use the "GHSubmitReview" command 
 to submit it.
 
+![GHReviews](/ghreviews.gif)
+
 ### Listing requested reviews
 
 The "GHRequestedReview" command can be used to list pull requests your username
@@ -214,8 +216,6 @@ to review, and once you've submitted a review, it will no longer list the review
 
 To list pull requests you've recently reviewed but are still open you may use the
 "GHReviewed" command.
-
-![GHReviews](/ghreviews.gif)
 
 ### Browsing by review comment
 
