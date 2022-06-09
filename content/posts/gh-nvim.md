@@ -170,6 +170,21 @@ to open it in a new tab.
 
 ![GHPRIssues](/ghprissues.gif)
 
+### Searching PRs
+
+The "GHSearchPRs" command can be used to search for pull requests associated with
+the repository Neovim is currently opened to.
+
+Once the command is issued a `vim.ui.input` prompt will appear. 
+This prompt will take further query strings as outlined [here](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests):
+
+If you do not specify any further query string all PRs will be listed, including
+closed PRs. 
+Be aware, this may exceed the "1000" PR list limit enforced by the GitHub API. 
+You may want to filter with "is:open" to avoid this.
+
+![GHSearchPRs](/ghsearchprs.gif)
+
 ## Working with Reviews
 
 ### Starting and submitting a review
@@ -186,6 +201,19 @@ will drop any pending comments and remove the pending review state.
 
 Once you've created all your comments you can use the "GHSubmitReview" command 
 to submit it.
+
+### Listing requested reviews
+
+The "GHRequestedReview" command can be used to list pull requests your username
+has explicitly been requested to review.
+
+### Listing recently reviewed pull requests
+
+The "GHRequestedReview" command will only show pull requests you've been requested
+to review, and once you've submitted a review, it will no longer list the reviewed PR.
+
+To list pull requests you've recently reviewed but are still open you may use the
+"GHReviewed" command.
 
 ![GHReviews](/ghreviews.gif)
 
@@ -213,6 +241,21 @@ Issues are independent of a pull request being opened and are their own feature
 in `gh.nvim`.
 
 ![GHOpenIssue](/ghissues.gif)
+
+### Searching Issues
+
+The "GHSearchIsssues" command can be used to search for issues on the GitHub platform.
+
+Once the command is issued a `vim.ui.input` prompt will appear. 
+This prompt will take further query strings as outlined [here](https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests):
+
+If you do not specify any further query string an attempt to list all Issues on
+GitHub will take place, and you will hit a GitHub limit.
+
+You may want to filter with "repo:{owner}/{name}" and even further with "repo:{owner}/{name} search_term in:title"
+to ensure you do not over extend your search.
+
+![GHSearchIssues](/ghsearchissues.gif)
 
 ## Completion
 
