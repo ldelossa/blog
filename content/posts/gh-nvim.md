@@ -223,6 +223,12 @@ Submitted reviews can be opened with (default) \<CR\> in a new "Reviews" panel.
 This panel aggregates review comments, further organizing threaded comments by
 reviews.
 
+### Immediately approving a review
+
+The "GHApproveReview" command can be used to start a review and immediately approve
+it. This is helpful if you do not plan on making any comments and would simply
+like to approve the review with an optional comment.
+
 ## Working with Issues
 
 Issues can be previewed, opened, commented on, and browsed.
