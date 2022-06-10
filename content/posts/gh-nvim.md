@@ -7,7 +7,7 @@ toc: true
 
 # Introducing gh.nvim
 
-`gh.nvim` is a tool for working with the GitHub platform through Neovim. 
+[gh.nvim](https://github.com/ldelossa/gh.nvim) is a tool for working with the GitHub platform through Neovim. 
 
 It was developed to alleviate the need to jump between editor and browser and 
 because its author felt performing code reviews should be done inside the editor 
