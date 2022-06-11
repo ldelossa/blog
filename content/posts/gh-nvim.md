@@ -263,6 +263,24 @@ to ensure you do not over extend your search.
 
 ![GHSearchIssues](/ghsearchissues.gif)
 
+## Notifications
+
+The "GHNotifications" command will open a buffer full of notifications for the 
+current repository Neovim is opened to.
+
+Within this buffer multiple notifications are presented. Each one can be opened
+with (default) <CR>. Opening an issue will open an issue buffer while opening a
+pull request will close any existing pull request and open the specified one.
+
+You can preview the notification by pressing (default) "d" when the cursor is
+over one. 
+
+You can mark a notification as read, which removes it from the notification buffer.
+You can also mark a notification as unsubscribed, which marks it as read and ignores
+any further events other then a mention of your username.
+
+![GHNotifications](/ghnotifications.gif)
+
 ## Completion
 
 `gh.nvim` provides a completion function for auto-completing usernames and 
