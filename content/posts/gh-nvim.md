@@ -269,7 +269,7 @@ The "GHNotifications" command will open a buffer full of notifications for the
 current repository Neovim is opened to.
 
 Within this buffer multiple notifications are presented. Each one can be opened
-with (default) <CR>. Opening an issue will open an issue buffer while opening a
+with (default) \<CR\>. Opening an issue will open an issue buffer while opening a
 pull request will close any existing pull request and open the specified one.
 
 You can preview the notification by pressing (default) "d" when the cursor is
