@@ -116,6 +116,10 @@ code locally produces the exact functionality of the code at this commit.
 You can access the commit message by pressing (default) "d" on the commit node 
 in the tree. 
 
+If you'd like to comment on the commit itself, or the commit message popup is 
+too small to read the entire commit message, you can hit (default) \<CR\> on 
+the root commit object in the tree to open a commit conversation buffer in a new tab.
+
 ![GHCommit](/ghcommit.gif)
 
 ### Browsing files changed
