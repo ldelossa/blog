@@ -37,7 +37,9 @@ of the PRs.</p><p><img src=/ghopenpr.gif alt=GHOpenPR></p><h3 id=browsing-commit
 and <code>gh.nvim</code>&rsquo;s diff-view will be presented with the first changed file of that commit.
 The underlying filesystem is also checked out to this commit so that running the
 code locally produces the exact functionality of the code at this commit.</p><p>You can access the commit message by pressing (default) &ldquo;d&rdquo; on the commit node
-in the tree.</p><p><img src=/ghcommit.gif alt=GHCommit></p><h3 id=browsing-files-changed>Browsing files changed</h3><p>If you prefer to browse at a higher level, a &ldquo;Files Changed&rdquo; tree exists as well.</p><p>Anytime a file is opened the underlying repo is checked out to the HEAD of the
+in the tree.</p><p>If you&rsquo;d like to comment on the commit itself, or the commit message popup is
+too small to read the entire commit message, you can hit (default) &lt;CR> on
+the root commit object in the tree to open a commit conversation buffer in a new tab.</p><p><img src=/ghcommit.gif alt=GHCommit></p><h3 id=browsing-files-changed>Browsing files changed</h3><p>If you prefer to browse at a higher level, a &ldquo;Files Changed&rdquo; tree exists as well.</p><p>Anytime a file is opened the underlying repo is checked out to the HEAD of the
 pull request, providing an aggregated diff view of what has changed in the pull
 request.</p><p><img src=/ghfileschanged.gif alt=GHFilesChanged></p><h3 id=working-with-review-comments>Working with review comments</h3><p>The &ldquo;Conversation&rdquo; tree holds threads of conversations about areas of the code.</p><p>By hitting (default) &lt;CR> on a thread node the diffview will be toggled open and
 the thread will be displayed on the opposite side in which the thread refers to.</p><p>From there you can use the opened thread window to perform actions on the
