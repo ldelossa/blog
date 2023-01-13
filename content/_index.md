@@ -6,6 +6,7 @@ eBPF and Linux kernel networking.
 My interests stretch across infrastructure, systems programming, networking, distributed systems and application architectures.
 
 I've worked at a lot of places, built a lot of things, and enjoy sharing my experience along the way.
+go install -tags extended github.com/gohugoio/hugo@latest
 
 # Open Source
 
@@ -26,6 +27,16 @@ You can see some of my talks about Clair here:
 - [Container Security with Clair](https://youtu.be/AhdPC_d0Lso)
 - [Inside the Indexer](https://youtu.be/pEAU6E1rZWo)
 
+## [nvim-ide](https://github.com/)
+
+A full featured IDE layer for Neovim. 
+
+Heavily inspired by VSCode.
+
+## [gh.nvim](https://github.com/ldelossa/gh.nvim)
+
+A fully featured GitHub integration for Neovim utilizing the `litee.nvim` framework.
+
 ## [litee.nvim](https://github.com/ldelossa/litee.nvim)
 
 Litee.nvim is a framework, written in Lua, for building plugins. 
@@ -34,19 +45,15 @@ There are several plugins reachable from the above link's readme.
 
 Most plugins deal with porting over feature present in VSCode that Neovim lacks.
 
-## [gh.nvim](https://github.com/ldelossa/gh.nvim)
+# Talks
 
-A fully featured GitHub integration for Neovim utilizing the `litee.nvim` framework.
+## [Simplifying and Making the Network Programmable with Kubernetes and SRv6 (Kubecon)](https://www.youtube.com/watch?v=ncYG-wScuL8&t=1s)
 
-## [sway-fzfify](https://github.com/ldelossa/sway-fzfify)
+I co-presented this talk at Kubecon NA 2022. 
 
-A set of scripts I use daily in coordination with the Sway window manager.
+An overview of my work with Cilium and SRv6 L3VPN. 
 
-Uses FZF to accomplish most Sway navigation needs such as creating and moving
-workspaces, selecting marks, launching Linux desktop apps, etc.
+## [Inside the Indexer (RedHat Commons)](https://www.youtube.com/watch?v=pEAU6E1rZWo&t=3s)
 
-## [vimdark](https://github.com/ldelossa/vimdark)
+An overview of Clair's Indexer architecture. 
 
-A minimal vim theme based on Chrome's dark reader.
-
-Offers a light theme similar to PaperColor as well.
