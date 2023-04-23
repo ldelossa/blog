@@ -1,0 +1,306 @@
+<!doctype html><html lang=en-us><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><title>Unit testing eBPF programs | a.programming.blog</title><link rel=stylesheet href=/css/style.css><link rel=stylesheet href=/css/fonts.css></head><body><nav><ul class=menu><li><a href=/>Home</a></li><li><a href=/posts/>Posts</a></li></ul><hr></nav><div class=article-meta><h1><span class=title>Unit testing eBPF programs</span></h1><h2 class=date>2023/04/18</h2></div><main><aside><nav id=TableOfContents><ul><li><a href=#unit-testing-ebpf>Unit Testing eBPF</a></li><li><a href=#testing-environment>Testing environment</a></li><li><a href=#introducing-the-bpf_prog_run-command>Introducing the BPF_PROG_RUN command</a></li><li><a href=#test-case-and-skeleton-loader>Test Case and Skeleton Loader</a></li><li><a href=#writing-the-test-runner>Writing the test runner</a></li><li><a href=#summing-it-up>Summing it up</a></li></ul></nav></aside><h2 id=unit-testing-ebpf>Unit Testing eBPF</h2><p>Love it or hate it, writing unit tests is all but mandatory for your code.</p><p>They provide a safety net when making changes, and give you that nice, warm
+feeling when you see them all pass after a change.</p><p>While working on a Kernel patch I had to investigate writing unit tests for
+eBPF programs.</p><p>Turns out, the Kernel developers have thought about this already and infrastructure
+exists to accomplish this.</p><p>I&rsquo;m going to provide a hands on example of unit testing a <code>TC</code> eBPF program.</p><p>In this test we want to confirm that looking up the route for a packet destined
+for an external IP address results in the selection of a the default gateway.</p><p>We will have complete control over the network namespace which the test is ran
+in.</p><p>If you have no idea what any of that means, don&rsquo;t worry, the concepts I will
+cover carry over to testing other types of eBPF programs.</p><h2 id=testing-environment>Testing environment</h2><p>In this post I&rsquo;m assuming you know how to compile your eBPF program utilizing
+<code>clang</code>, <code>bpftool</code> and how to generate a <code>vmlinux.h</code> file.</p><p>If you don&rsquo;t check out my other <a href=https://who.ldelossa.is/posts/bpf-zero-to-hero/>post here</a></p><p>With that said, we do need to level-set on your coding environment and the tools
+we need in your coding environment to follow along.</p><p>You must have:</p><ul><li>bpftool - this, in additional to generating the vmlinux.h, will be used to
+generate a &ldquo;skeleton&rdquo; loader for your compiled eBPF program.</li><li>clang - we need this to compile eBPF programs</li><li>make - used to run my butchered up Makefile</li></ul><p>You must also have <code>CAP_SYS_ADMIN</code> privileges on your machine, if you don&rsquo;t know
+what that means, 99% of the time running as <code>root</code> will fill this requirement.</p><p>I will also assume you&rsquo;re on Linux, which you may think is obvious statement,
+but <a href=https://github.com/microsoft/ebpf-for-windows>it&rsquo;s a dwindling assumption</a></p><p>Okay, one last assumption, you have <code>libbpf</code> installed correctly and clang/gcc can
+locate it and compile your eBPF programs.</p><h2 id=introducing-the-bpf_prog_run-command>Introducing the BPF_PROG_RUN command</h2><p>The core functionality we want to focus on for unit testing eBPF program is a
+eBPF command called &ldquo;BPF_PROG_RUN&rdquo;.</p><p>This command was renamed from &ldquo;BPF_PROG_TEST_RUN&rdquo; and this identifier maybe used
+interchangeable.</p><p>A &ldquo;command&rdquo; is an enum value which can be passed to the <code>bpf</code> sys-call exposed
+by Linux.</p><p>However, <code>libbpf</code> usually wraps the <code>bpf</code> sys-call usage for convenience and
+sanity checking.</p><p>Therefore, we&rsquo;ll focus on using <code>libbpf</code>&rsquo;s wrapper around the &ldquo;BPF_PROG_RUN&rdquo;
+command, <code>bpf_test_run_opts</code></p><p>Let&rsquo;s take a look at it&rsquo;s forward declaration:
+<a href=https://elixir.bootlin.com/linux/v6.2.11/source/tools/lib/bpf/bpf.h#L454>https://elixir.bootlin.com/linux/v6.2.11/source/tools/lib/bpf/bpf.h#L454</a></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>struct</span> bpf_test_run_opts {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>size_t</span> sz; <span style=color:#75715e>/* size of this struct for forward/backward compatibility */</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>data_in; <span style=color:#75715e>/* optional */</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>data_out;      <span style=color:#75715e>/* optional */</span>
+</span></span><span style=display:flex><span>	__u32 data_size_in;
+</span></span><span style=display:flex><span>	__u32 data_size_out; <span style=color:#75715e>/* in: max length of data_out
+</span></span></span><span style=display:flex><span><span style=color:#75715e>			      * out: length of data_out
+</span></span></span><span style=display:flex><span><span style=color:#75715e>			      */</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ctx_in; <span style=color:#75715e>/* optional */</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span>ctx_out;      <span style=color:#75715e>/* optional */</span>
+</span></span><span style=display:flex><span>	__u32 ctx_size_in;
+</span></span><span style=display:flex><span>	__u32 ctx_size_out; <span style=color:#75715e>/* in: max length of ctx_out
+</span></span></span><span style=display:flex><span><span style=color:#75715e>			     * out: length of cxt_out
+</span></span></span><span style=display:flex><span><span style=color:#75715e>			     */</span>
+</span></span><span style=display:flex><span>	__u32 retval;        <span style=color:#75715e>/* out: return code of the BPF program */</span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>int</span> repeat;
+</span></span><span style=display:flex><span>	__u32 duration;      <span style=color:#75715e>/* out: average per repetition in ns */</span>
+</span></span><span style=display:flex><span>	__u32 flags;
+</span></span><span style=display:flex><span>	__u32 cpu;
+</span></span><span style=display:flex><span>	__u32 batch_size;
+</span></span><span style=display:flex><span>};
+</span></span><span style=display:flex><span><span style=color:#75715e>#define bpf_test_run_opts__last_field batch_size
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span>LIBBPF_API <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>bpf_prog_test_run_opts</span>(<span style=color:#66d9ef>int</span> prog_fd,
+</span></span><span style=display:flex><span>				      <span style=color:#66d9ef>struct</span> bpf_test_run_opts <span style=color:#f92672>*</span>opts);
+</span></span></code></pre></div><p>If we were to look at the implementation, we&rsquo;d find that <code>bpf_prog_test_run_opts</code>
+simply copies the provided <code>opts</code> to its a structure the Kernel will own, does
+some sanity checking on the <code>opts</code> structure, and then calls the <code>bpf</code> sys-call
+directly.</p><p>The arguments to the <code>libbpf</code> function takes an eBPF program file descriptor
+and a <code>opts</code> structure.</p><p>The eBPF program file descriptor represents an eBPF program which is loaded into
+the Kernel, we&rsquo;ll demonstrate a convenient way of obtaining this file descriptor
+later in this post.</p><p>The <code>opts</code> structure provides both mock data and options to the function.
+While some fields say &lsquo;optional&rsquo; we will learn that it really depends on the
+eBPF program type you are testing, whether these fields are optional or not.</p><p>The important fields we&rsquo;ll utilize in this post are:</p><p><code>sz</code> is always required, and its simply set to <code>sizeof(bpf_test_run_opts)</code>.</p><p><code>data_in, data_size_in</code> allows you to provide mock data to the <code>ctx</code> that is
+passed into your eBPF program, in the case of a &ldquo;TC&rdquo; program, a mock IPv4 packet.</p><p><code>ctx_in, ctx_size_in</code> allows you to pass in a mock ctx, in the case of a &ldquo;TC&rdquo; program,
+a mock <code>__sk_buff</code> structure, which is eBPF&rsquo;s representation of the Kernel&rsquo;s
+socket buffer.</p><h2 id=test-case-and-skeleton-loader>Test Case and Skeleton Loader</h2><p>With the introduction of <code>bpf_test_run_opts</code> out of the way, lets start writing
+our eBPF test case.</p><p>We will also use <code>bpftool</code> to generate a skeleton loader, which is a header file
+with functions for loading our compiled eBPF program into the Kernel and giving
+us a handle to the loaded program.</p><p>This handle can be used to obtain the file descriptor to the loaded eBPF program,
+and interact with it during the Kernel&rsquo;s runtime.</p><p>Our test case&rsquo;s goal is to ensure that a packet sourced from the host, destined
+for an external node, selects the default route, and is forwarded to the correct
+interface.</p><p>To test this we will be utilizing the eBPF helper <code>bpf_fib_lookup</code>.</p><p>We don&rsquo;t need to understand how this helper works in details, suffice it to say
+that we provide in the source and destination of a incoming packet, and it
+returns to us an interface, if any, that the packet would be forwarded to.</p><p>In our test case, we want to see the aforementioned interface be the default
+gateway for the network namespace.</p><p>Our test packet will be sourced from <code>127.0.0.1</code> and its destination will be
+<code>8.8.8.8</code>.</p><p>Since we are running a unit test, no data will actually be sent, and no side
+effects outside of the host will occur.</p><p>Keep in mind, this test a bit contrived to show off a few features of the testing
+infrastructure, and we lean more towards &ldquo;demonstration&rdquo; then &ldquo;practicality&rdquo;.</p><p>Okay, so lets examine our test eBPF program:</p><p><code>fib_lookup.bpf.c</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;../vmlinux.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;bpf/bpf_helpers.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define TC_ACT_OK		0
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#define TC_ACT_SHOT		2
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#define TC_ACT_REDIRECT		7
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define AF_INET		        2	</span><span style=color:#75715e>/* Internet IP Protocol 	*/</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>struct</span> bpf_fib_lookup fib_params <span style=color:#f92672>=</span> {<span style=color:#ae81ff>0</span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>int</span> fib_lookup_ret <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>SEC</span>(<span style=color:#e6db74>&#34;tc&#34;</span>)
+</span></span><span style=display:flex><span><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>fib_lookup</span>(<span style=color:#66d9ef>struct</span> __sk_buff <span style=color:#f92672>*</span>skb)
+</span></span><span style=display:flex><span>{
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>struct</span> iphdr <span style=color:#f92672>*</span>ip <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>bpf_printk</span>(<span style=color:#e6db74>&#34;performing FIB lookup</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>bpf_printk</span>(<span style=color:#e6db74>&#34;fib lookup original ret: %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, fib_lookup_ret);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	    fib_lookup_ret <span style=color:#f92672>=</span> <span style=color:#a6e22e>bpf_fib_lookup</span>(skb, <span style=color:#f92672>&amp;</span>fib_params, <span style=color:#66d9ef>sizeof</span>(fib_params),
+</span></span><span style=display:flex><span>					<span style=color:#ae81ff>0</span>);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>bpf_printk</span>(<span style=color:#e6db74>&#34;fib lookup ret: %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, fib_lookup_ret);
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>return</span> TC_ACT_OK;
+</span></span><span style=display:flex><span>}
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>char</span> _license[] <span style=color:#a6e22e>SEC</span>(<span style=color:#e6db74>&#34;license&#34;</span>) <span style=color:#f92672>=</span> <span style=color:#e6db74>&#34;GPL&#34;</span>;
+</span></span></code></pre></div><p>As you can see the test is very simple.</p><p>We import the necessary headers and then we define two global variables, setting
+them both to zero.</p><p>By defining these variables as global and setting them to zero, they actually
+become available to userspace via our skeleton.</p><p>Let&rsquo;s use the following Makefile to compile and generate a skeleton for this
+eBPF program.</p><p><code>Makefile</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-make data-lang=make><span style=display:flex><span>CFLAGS <span style=color:#f92672>+=</span> -g3 <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>          -Wall
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>LIBS <span style=color:#f92672>=</span> bpf
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>all</span><span style=color:#f92672>:</span> fib_lookup.bpf.o fib_lookup.skel.h
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fib_lookup.bpf.o</span><span style=color:#f92672>:</span> fib_lookup.bpf.c
+</span></span><span style=display:flex><span>	clang -target bpf -Wall -O2 -g -c $&lt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fib_lookup.skel.h</span><span style=color:#f92672>:</span> fib_lookup.bpf.o
+</span></span><span style=display:flex><span>	bpftool gen skeleton $&lt; &gt; $@
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>test</span><span style=color:#f92672>:</span> test.c
+</span></span><span style=display:flex><span>	gcc <span style=color:#66d9ef>$(</span>CFLAGS<span style=color:#66d9ef>)</span> -l<span style=color:#66d9ef>$(</span>LIBS<span style=color:#66d9ef>)</span> -o $@ $&lt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>.PHONY</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>clean</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>	rm -rf fib_lookup.bpf.o
+</span></span><span style=display:flex><span>	rm -rf fib_lookup.skel.h
+</span></span><span style=display:flex><span>	rm -rf test
+</span></span></code></pre></div><p>Ignore the <code>test</code> binary for now, we&rsquo;ll write our test runner in the next
+section.</p><p>If we inspect the file &ldquo;fib_lookup.skel.h&rdquo; we come across the interesting
+structure.</p><p><code>fib_lookup.skel.h</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>struct</span> fib_lookup_bpf {
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> bpf_object_skeleton <span style=color:#f92672>*</span>skeleton;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> bpf_object <span style=color:#f92672>*</span>obj;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>struct</span> bpf_map <span style=color:#f92672>*</span>bss;
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>struct</span> bpf_map <span style=color:#f92672>*</span>rodata;
+</span></span><span style=display:flex><span>	} maps;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>struct</span> bpf_program <span style=color:#f92672>*</span>fib_lookup;
+</span></span><span style=display:flex><span>	} progs;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>struct</span> bpf_link <span style=color:#f92672>*</span>fib_lookup;
+</span></span><span style=display:flex><span>	} links;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> fib_lookup_bpf__bss {
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>struct</span> bpf_fib_lookup fib_params;
+</span></span><span style=display:flex><span>		<span style=color:#66d9ef>int</span> fib_lookup_ret;
+</span></span><span style=display:flex><span>	} <span style=color:#f92672>*</span>bss;
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>struct</span> fib_lookup_bpf__rodata {
+</span></span><span style=display:flex><span>	} <span style=color:#f92672>*</span>rodata;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#ifdef __cplusplus
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span><span style=color:#a6e22e>open</span>(<span style=color:#66d9ef>const</span> <span style=color:#66d9ef>struct</span> bpf_object_open_opts <span style=color:#f92672>*</span>opts <span style=color:#f92672>=</span> nullptr);
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span><span style=color:#a6e22e>open_and_load</span>();
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>load</span>(<span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>skel);
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>int</span> <span style=color:#a6e22e>attach</span>(<span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>skel);
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>detach</span>(<span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>skel);
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>void</span> <span style=color:#a6e22e>destroy</span>(<span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>skel);
+</span></span><span style=display:flex><span>	<span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>const</span> <span style=color:#66d9ef>void</span> <span style=color:#f92672>*</span><span style=color:#a6e22e>elf_bytes</span>(<span style=color:#66d9ef>size_t</span> <span style=color:#f92672>*</span>sz);
+</span></span><span style=display:flex><span><span style=color:#75715e>#endif </span><span style=color:#75715e>/* __cplusplus */</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span></code></pre></div><p>This is the handle to our loaded eBPF program which the skeleton loader returns
+to us when we call:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>static</span> <span style=color:#66d9ef>inline</span> <span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fib_lookup_bpf__open_and_load</span>(<span style=color:#66d9ef>void</span>)
+</span></span></code></pre></div><p>In the same file.</p><p>The interesting bit here is:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#66d9ef>struct</span> fib_lookup_bpf__bss {
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>struct</span> bpf_fib_lookup fib_params;
+</span></span><span style=display:flex><span>    <span style=color:#66d9ef>int</span> fib_lookup_ret;
+</span></span><span style=display:flex><span>} <span style=color:#f92672>*</span>bss;
+</span></span></code></pre></div><p>Notice, we get access to our global zero initialized variables in the <code>bss</code>
+field.</p><p>This allows a userspace program to load the eBPF program, retrieve the handle
+to it, and then both &ldquo;inject&rdquo; and &ldquo;read&rdquo; values from globals before and after
+<code>bpf_test_run_opts</code> is called.</p><p>This is exactly what our test runner is going to do.</p><h2 id=writing-the-test-runner>Writing the test runner</h2><p>As eluded to above, we want our test runner to do the following:</p><ul><li>Load our eBPF test program into the Kernel, getting a handle to the
+<code>fib_lookup_bpf</code> structure defined in <code>bpf_lookup.skel.h</code></li><li>Inject a mock <code>bpf_fib_lookup</code> parameter structure into the test before
+its ran</li><li>utilize <code>libpf</code>&rsquo;s <code>bpf_test_run_opts</code> function to run our test in userspace</li><li>read the resulting <code>fib_lookup_bpf</code> and <code>fib_lookup_ret</code> to determine if the
+default gateway was used.</li></ul><p>We have control of the network namespace the test runs in, so we can hard-code
+the interface ID (ifindex) which represents the default gateway, making our
+test runner a bit simpler.</p><p>Let&rsquo;s take a look at the test runner:</p><p><code>test.c</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;bpf/bpf.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;bpf/libbpf.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;stdio.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;bpf/bpf_endian.h&gt;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;fib_lookup.skel.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;net/ethernet.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;linux/ip.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&#34;netinet/tcp.h&#34;</span><span style=color:#75715e>
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>#define TARGET_IFINDEX 2
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// in our test, we only care that the packet is the correct size,
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// since our test does not touch any packet data.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>char</span> v4_pkt[(<span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>struct</span> ethhdr) <span style=color:#f92672>+</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>struct</span> iphdr) <span style=color:#f92672>+</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>struct</span> tcphdr))];
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#75715e>// we&#39;ll hardcore the ifindex here, since w can be pretty certain that ifindex 1
+</span></span></span><span style=display:flex><span><span style=color:#75715e>// is the loopback address.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span><span style=color:#66d9ef>struct</span> __sk_buff skb <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>        .ifindex <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span> <span style=color:#75715e>// mock that the skb came from loopback.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>};
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>int</span> <span style=color:#a6e22e>main</span> (<span style=color:#66d9ef>int</span> argc, <span style=color:#66d9ef>char</span> <span style=color:#f92672>*</span>argv[]) {
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>struct</span> fib_lookup_bpf <span style=color:#f92672>*</span>skel;
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>int</span> prog_fd, err <span style=color:#f92672>=</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// define our BPF_PROG_RUN options with our mock data.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>struct</span> bpf_test_run_opts opts <span style=color:#f92672>=</span> {
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// required, or else bpf_prog_test_run_opts will fail
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>                .sz <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(<span style=color:#66d9ef>struct</span> bpf_test_run_opts),
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// data_in will wind up being ctx.data
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>                .data_in <span style=color:#f92672>=</span> <span style=color:#f92672>&amp;</span>v4_pkt,
+</span></span><span style=display:flex><span>                .data_size_in <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(v4_pkt),
+</span></span><span style=display:flex><span>                <span style=color:#75715e>// ctx is an skb in this case
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>                .ctx_in <span style=color:#f92672>=</span> <span style=color:#f92672>&amp;</span>skb,
+</span></span><span style=display:flex><span>                .ctx_size_in <span style=color:#f92672>=</span> <span style=color:#66d9ef>sizeof</span>(skb)
+</span></span><span style=display:flex><span>        };
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// load our fib lookup test program into the Kernel and return our
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#75715e>// skeleton handle to it.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        skel <span style=color:#f92672>=</span> <span style=color:#a6e22e>fib_lookup_bpf__open_and_load</span>();
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (<span style=color:#f92672>!</span>skel) {
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;[error]: failed to open and load skeleton: %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, err);
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// inject our test parameters into the fib lookup parameter, this primes
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#75715e>// our test.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_lookup_ret <span style=color:#f92672>=</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>        skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.family <span style=color:#f92672>=</span> AF_INET;
+</span></span><span style=display:flex><span>        skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ipv4_src <span style=color:#f92672>=</span> <span style=color:#ae81ff>0x100007f</span>;
+</span></span><span style=display:flex><span>        skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ipv4_dst <span style=color:#f92672>=</span> <span style=color:#ae81ff>0x8080808</span>;
+</span></span><span style=display:flex><span>        skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ifindex <span style=color:#f92672>=</span> <span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// get the prog_fd from the skeleton, and run our test.
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        prog_fd <span style=color:#f92672>=</span> <span style=color:#a6e22e>bpf_program__fd</span>(skel<span style=color:#f92672>-&gt;</span>progs.fib_lookup);
+</span></span><span style=display:flex><span>        err <span style=color:#f92672>=</span> <span style=color:#a6e22e>bpf_prog_test_run_opts</span>(prog_fd, <span style=color:#f92672>&amp;</span>opts);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (err <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;[error]: bpf test run failed: %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, err);
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>2</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#75715e>// check global variables for response
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>        <span style=color:#66d9ef>if</span> (skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_lookup_ret <span style=color:#f92672>!=</span> <span style=color:#ae81ff>0</span>) {
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;[FAIL]: fib lookup returned: %d&#34;</span>, skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_lookup_ret);
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>if</span> (skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ifindex <span style=color:#f92672>!=</span> TARGET_IFINDEX) {
+</span></span><span style=display:flex><span>                <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;[FAIL]: fib lookup did not choose default gw interface: %d&#34;</span>, skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ifindex);
+</span></span><span style=display:flex><span>                <span style=color:#66d9ef>return</span> <span style=color:#f92672>-</span><span style=color:#ae81ff>1</span>;
+</span></span><span style=display:flex><span>        }
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>        <span style=color:#a6e22e>printf</span>(<span style=color:#e6db74>&#34;[PASS]: ifindex %d</span><span style=color:#ae81ff>\n</span><span style=color:#e6db74>&#34;</span>, skel<span style=color:#f92672>-&gt;</span>bss<span style=color:#f92672>-&gt;</span>fib_params.ifindex);
+</span></span><span style=display:flex><span>        <span style=color:#66d9ef>return</span> <span style=color:#ae81ff>0</span>;
+</span></span><span style=display:flex><span>}
+</span></span></code></pre></div><p>Let&rsquo;s update our Makefile to build our test runner as well.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-make data-lang=make><span style=display:flex><span>CFLAGS <span style=color:#f92672>+=</span> -g3 <span style=color:#ae81ff>\
+</span></span></span><span style=display:flex><span><span style=color:#ae81ff></span>          -Wall
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>LIBS <span style=color:#f92672>=</span> bpf
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>all</span><span style=color:#f92672>:</span> fib_lookup.bpf.o fib_lookup.skel.h test
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fib_lookup.bpf.o</span><span style=color:#f92672>:</span> fib_lookup.bpf.c
+</span></span><span style=display:flex><span>	clang -target bpf -Wall -O2 -g -c $&lt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>fib_lookup.skel.h</span><span style=color:#f92672>:</span> fib_lookup.bpf.o
+</span></span><span style=display:flex><span>	bpftool gen skeleton $&lt; &gt; $@
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>test</span><span style=color:#f92672>:</span> test.c
+</span></span><span style=display:flex><span>	gcc <span style=color:#66d9ef>$(</span>CFLAGS<span style=color:#66d9ef>)</span> -l<span style=color:#66d9ef>$(</span>LIBS<span style=color:#66d9ef>)</span> -o $@ $&lt;
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>.PHONY</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span><span style=color:#a6e22e>clean</span><span style=color:#f92672>:</span>
+</span></span><span style=display:flex><span>	rm -rf fib_lookup.bpf.o
+</span></span><span style=display:flex><span>	rm -rf fib_lookup.skel.h
+</span></span><span style=display:flex><span>	rm -rf test
+</span></span></code></pre></div><p>And finally lets provide a script which sets up a network namespace for this
+test runner to work inside, and runs the test.</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-bash data-lang=bash><span style=display:flex><span><span style=color:#75715e>#!/bin/bash
+</span></span></span><span style=display:flex><span><span style=color:#75715e></span>NETNS_NAME<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;netns-1&#34;</span>
+</span></span><span style=display:flex><span>n<span style=color:#f92672>=</span><span style=color:#e6db74>&#39;sudo ip netns&#39;</span>
+</span></span><span style=display:flex><span>nexec<span style=color:#f92672>=</span><span style=color:#e6db74>&#34;sudo ip netns exec </span>$NETNS_NAME<span style=color:#e6db74>&#34;</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>function</span> setup_netns<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># add &#39;netns-1&#39; network namespace where we&#39;ll</span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># run our test.</span>
+</span></span><span style=display:flex><span>    $n add $NETNS_NAME
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># setup loopback</span>
+</span></span><span style=display:flex><span>    $nexec ip addr add 127.0.0.1 dev lo
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># setup a dummy interface which can route to the default gw, and </span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># setup a route to the default gw.</span>
+</span></span><span style=display:flex><span>    $nexec ip link add name eth0 type dummy
+</span></span><span style=display:flex><span>    $nexec ip link set up eth0
+</span></span><span style=display:flex><span>    $nexec ip addr add 192.168.1.10/24 dev eth0
+</span></span><span style=display:flex><span>    $nexec ip route add default via 192.168.1.11
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e># since 192.168.1.11 doesn&#39;t actually exist, create a # perm arp-table enty </span>
+</span></span><span style=display:flex><span>    <span style=color:#75715e>#for it, allowing fib lookup to suceed.</span>
+</span></span><span style=display:flex><span>    $nexec ip neigh add 192.168.1.11 dev eth0 lladdr <span style=color:#e6db74>&#34;0F:0F:0F:0F:0F:0F&#34;</span> nud permanent
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span><span style=color:#66d9ef>function</span> teardown_netns<span style=color:#f92672>()</span> <span style=color:#f92672>{</span>
+</span></span><span style=display:flex><span>    $n del $NETNS_NAME
+</span></span><span style=display:flex><span><span style=color:#f92672>}</span>
+</span></span><span style=display:flex><span>
+</span></span><span style=display:flex><span>setup_netns
+</span></span><span style=display:flex><span>$nexec ./test
+</span></span><span style=display:flex><span>teardown_netns
+</span></span></code></pre></div><p>Now when we run this script we get the following output:</p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-shell data-lang=shell><span style=display:flex><span><span style=color:#f92672>[</span>PASS<span style=color:#f92672>]</span>: ifindex <span style=color:#ae81ff>2</span>
+</span></span></code></pre></div><h2 id=summing-it-up>Summing it up</h2><p>Lets summarize the major points in this post.</p><p>A eBPF program can define global variables which can be modified, both before and
+after, a userspace test run of the program.</p><p>The <code>BPF_PROG_RUN</code> command can be used run your eBPF program in user space,
+which is wrapped by the <code>bpf_prog_test_run_opts()</code> function in <code>libbpf</code>.</p><p>Once the eBPF program is compiled into an object file, you can generate a skeleton
+loader with <code>bpftool</code>, this skeleton loader will load your eBPF program into the
+Kernel, and also provide your userspace program access to the global variables
+mentioned above.</p><p>Finally, you can write a userspace test runner which sets the global variables
+of the loaded eBPF program before the test, and reads them after, allowing you
+to determine if the eBPF program performed the actions you intended.</p></main><footer></footer></body></html>
