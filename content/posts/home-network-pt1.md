@@ -1,6 +1,6 @@
 ---
 title: Building A Home Lab With Podman - Pt1
-summary: An example utilizing pprof for some impressive allocation reductions in the PGX sql library.
+summary: A rundown of how I used Podman to build my home network
 date: 2020-07-01
 toc: true
 ---

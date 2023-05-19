@@ -6,7 +6,6 @@ eBPF and Linux kernel networking.
 My interests stretch across infrastructure, systems programming, networking, distributed systems and application architectures.
 
 I've worked at a lot of places, built a lot of things, and enjoy sharing my experience along the way.
-go install -tags extended github.com/gohugoio/hugo@latest
 
 # Open Source
 
