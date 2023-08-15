@@ -44,6 +44,16 @@ There are several plugins reachable from the above link's readme.
 
 Most plugins deal with porting over feature present in VSCode that Neovim lacks.
 
+# Kernel Contributions
+
+- [bpf: utilize table ID in bpf_fib_lookup helper](https://lore.kernel.org/bpf/20230505-bpf-add-tbid-fib-lookup-v2-0-0a31c22c748c@gmail.com/)
+
+This change allows a routing table ID to be used in the eBPF fib lookup helper.
+When a fib lookup occurs we can now say which table we should perform the lookup
+from. 
+This essentially pushes policy routing, akin to the `ip rule` functionality, into
+the `tc` layer of the Kernel.
+
 # Talks
 
 ## [Simplifying and Making the Network Programmable with Kubernetes and SRv6 (Kubecon)](https://www.youtube.com/watch?v=ncYG-wScuL8&t=1s)
