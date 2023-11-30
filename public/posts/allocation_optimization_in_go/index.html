@@ -28,6 +28,16 @@
 </div>
 
 <main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#the-code">The code</a></li>
+    <li><a href="#reducing-channel-allocations">Reducing channel allocations</a></li>
+    <li><a href="#a-pgx-trick">A PGX Trick</a></li>
+    <li><a href="#disclaimer-on-optimization">Disclaimer on optimization</a></li>
+  </ul>
+</nav>
+</aside>
 <p>Performance tuning is one of those programming rituals that gets oddly addicting.
 Seems like humans have a fundamental impulse to make a graph plot in their desired direction.
 This can be seen in a wide assortment of fields.
@@ -185,6 +195,8 @@ The command tag tells us if any rows were affected by the exec. This effectively
 If you know the code you are writing will be in the &ldquo;hot-path&rdquo; its empowering to know what your allocation profile looks like.
 Learning the skills to performance tune is addicting and powerful but writing code that can be read and easily maintained should always be the first goal.
 That being said I do think every engineer should go down the rabbit hole at least once. Its a lot of fun.</p>
+
+
 
 </main>
 

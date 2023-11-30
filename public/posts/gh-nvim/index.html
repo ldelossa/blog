@@ -28,8 +28,47 @@
 </div>
 
 <main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#getting-started">Getting started</a>
+      <ul>
+        <li><a href="#cli-dependencies">CLI dependencies</a></li>
+        <li><a href="#liteenvim">litee.nvim</a></li>
+        <li><a href="#configuration">Configuration</a></li>
+      </ul>
+    </li>
+    <li><a href="#working-with-pull-requests">Working with pull requests</a>
+      <ul>
+        <li><a href="#opening-a-pull-request">Opening a Pull Request</a></li>
+        <li><a href="#browsing-commits">Browsing Commits</a></li>
+        <li><a href="#browsing-files-changed">Browsing files changed</a></li>
+        <li><a href="#working-with-review-comments">Working with review comments</a></li>
+        <li><a href="#working-with-pull-request-comments">Working with pull request comments</a></li>
+        <li><a href="#searching-prs">Searching PRs</a></li>
+      </ul>
+    </li>
+    <li><a href="#working-with-reviews">Working with Reviews</a>
+      <ul>
+        <li><a href="#starting-and-submitting-a-review">Starting and submitting a review</a></li>
+        <li><a href="#listing-requested-reviews">Listing requested reviews</a></li>
+        <li><a href="#listing-recently-reviewed-pull-requests">Listing recently reviewed pull requests</a></li>
+        <li><a href="#browsing-by-review-comment">Browsing by review comment</a></li>
+        <li><a href="#immediately-approving-a-review">Immediately approving a review</a></li>
+      </ul>
+    </li>
+    <li><a href="#working-with-issues">Working with Issues</a>
+      <ul>
+        <li><a href="#searching-issues">Searching Issues</a></li>
+      </ul>
+    </li>
+    <li><a href="#notifications">Notifications</a></li>
+    <li><a href="#completion">Completion</a></li>
+  </ul>
+</nav>
+</aside>
 <h1 id="introducing-ghnvim">Introducing gh.nvim</h1>
-<p><code>gh.nvim</code> is a tool for working with the GitHub platform through Neovim.</p>
+<p><a href="https://github.com/ldelossa/gh.nvim">gh.nvim</a> is a tool for working with the GitHub platform through Neovim.</p>
 <p>It was developed to alleviate the need to jump between editor and browser and
 because its author felt performing code reviews should be done inside the editor
 where all your language inspection tools exist.</p>
@@ -45,8 +84,8 @@ repository, fetch the branch, and check it out. As you browse the code within
 visualize, run, debug, and inspect the code locally at every commit.</p>
 <p>This blog post will be a constant &ldquo;WIP&rdquo; as features are added and shift around
 during development. <code>gh.nvim</code> is new and has not reached a stable release yet.</p>
-<h1 id="getting-started">Getting started</h1>
-<h2 id="cli-dependencies">CLI dependencies</h2>
+<h2 id="getting-started">Getting started</h2>
+<h3 id="cli-dependencies">CLI dependencies</h3>
 <p><code>gh.nvim</code> requires two external CLI tools to work.</p>
 <ul>
 <li><code>gh</code> - <a href="https://cli.github.com/">https://cli.github.com/</a></li>
@@ -60,7 +99,7 @@ code locally and will fail if the correct protocols are not being used.</p>
 <p>When <code>gh.nvim</code> opens a timer is started. This timer will perform no action until
 an issue or a pull request is opened (so don&rsquo;t worry if you see this when you
 don&rsquo;t plan on using <code>gh.nvim</code> at the moment).</p>
-<h2 id="liteenvim">litee.nvim</h2>
+<h3 id="liteenvim">litee.nvim</h3>
 <p><code>gh.nvim</code> is implemented with help of <a href="https://github.com/ldelossa/litee.nvim">litee.nvim</a>
 and is a Neovim plugin depedency. It must be installed for <code>gh.nvim</code> to work.</p>
 <p><code>litee.nvim</code> provides the implementation of a unified &ldquo;panel&rdquo; similar to VSCode&rsquo;s
@@ -73,7 +112,7 @@ like all the other plugins. If you&rsquo;re looking at <code>gh.nvim</code> and 
 &ldquo;how can I make the panel open on the top instead of right&rdquo; then you&rsquo;ll want to
 look at <code>litee.nvim</code>&rsquo;s configuration. Maybe a little confusing, but this allows
 the panel code to be shared between multiple plugins.</p>
-<h2 id="configuration">Configuration</h2>
+<h3 id="configuration">Configuration</h3>
 <p>For full configuration details you&rsquo;ll want to check out the plugin&rsquo;s docs using
 (:h gh.nvim).</p>
 <p>At a minimum, you must call <code>litee.nvim</code>&rsquo;s setup function followed by <code>gh.nvim</code>&rsquo;s.</p>
@@ -89,14 +128,14 @@ the panel code to be shared between multiple plugins.</p>
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e">-- to GitHub integration.</span>
 </span></span><span style="display:flex;"><span>})
 </span></span></code></pre></div><p>Place the following function calls anywhere you setup your <code>neovim</code> plugins.</p>
-<h1 id="working-with-pull-requests">Working with pull requests</h1>
-<h2 id="opening-a-pull-request">Opening a Pull Request</h2>
+<h2 id="working-with-pull-requests">Working with pull requests</h2>
+<h3 id="opening-a-pull-request">Opening a Pull Request</h3>
 <p>A pull request can be opened with &ldquo;GHOpenPR&rdquo;.</p>
 <p>If no PR number is provided a <code>vim.ui.select</code> dialogue is presented.</p>
 <p>Typically, telescope and fzf.lua will override this providing a fuzzy searcher
 of the PRs.</p>
 <p><img src="/ghopenpr.gif" alt="GHOpenPR"></p>
-<h2 id="browsing-commits">Browsing Commits</h2>
+<h3 id="browsing-commits">Browsing Commits</h3>
 <p>Once a PR is opened the PR panel will toggle itself visible.</p>
 <p>Within this panel there will be a &ldquo;commits&rdquo; tree.</p>
 <p>By hitting (default) &lt;CR&gt; on a commit object the &ldquo;Commits&rdquo; panel will now open
@@ -105,14 +144,17 @@ The underlying filesystem is also checked out to this commit so that running the
 code locally produces the exact functionality of the code at this commit.</p>
 <p>You can access the commit message by pressing (default) &ldquo;d&rdquo; on the commit node
 in the tree.</p>
+<p>If you&rsquo;d like to comment on the commit itself, or the commit message popup is
+too small to read the entire commit message, you can hit (default) &lt;CR&gt; on
+the root commit object in the tree to open a commit conversation buffer in a new tab.</p>
 <p><img src="/ghcommit.gif" alt="GHCommit"></p>
-<h2 id="browsing-files-changed">Browsing files changed</h2>
+<h3 id="browsing-files-changed">Browsing files changed</h3>
 <p>If you prefer to browse at a higher level, a &ldquo;Files Changed&rdquo; tree exists as well.</p>
 <p>Anytime a file is opened the underlying repo is checked out to the HEAD of the
 pull request, providing an aggregated diff view of what has changed in the pull
 request.</p>
 <p><img src="/ghfileschanged.gif" alt="GHFilesChanged"></p>
-<h2 id="working-with-review-comments">Working with review comments</h2>
+<h3 id="working-with-review-comments">Working with review comments</h3>
 <p>The &ldquo;Conversation&rdquo; tree holds threads of conversations about areas of the code.</p>
 <p>By hitting (default) &lt;CR&gt; on a thread node the diffview will be toggled open and
 the thread will be displayed on the opposite side in which the thread refers to.</p>
@@ -129,7 +171,7 @@ using &ldquo;GHCreateThread&rdquo;</p>
 <p>You may hit (default) &lt;Ctrl-r&gt; to resolve the thread if you have permissions to
 do so.</p>
 <p><img src="/ghthreads.gif" alt="GHThreads"></p>
-<h2 id="working-with-pull-request-comments">Working with pull request comments</h2>
+<h3 id="working-with-pull-request-comments">Working with pull request comments</h3>
 <p>Pull request comments are separate from review comments. Pull request comments
 are not affiliated with a file diff.</p>
 <p>When the PR is initially opened an issue buffer is opened with the pull request&rsquo;s
@@ -139,6 +181,16 @@ issue buffer.</p>
 <p>If the issue buffer isn&rsquo;t present you can hit (default) &lt;CR&gt; on the root PR node
 to open it in a new tab.</p>
 <p><img src="/ghprissues.gif" alt="GHPRIssues"></p>
+<h3 id="searching-prs">Searching PRs</h3>
+<p>The &ldquo;GHSearchPRs&rdquo; command can be used to search for pull requests associated with
+the repository Neovim is currently opened to.</p>
+<p>Once the command is issued a <code>vim.ui.input</code> prompt will appear.
+This prompt will take further query strings as outlined <a href="https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests">here</a>:</p>
+<p>If you do not specify any further query string all PRs will be listed, including
+closed PRs.
+Be aware, this may exceed the &ldquo;1000&rdquo; PR list limit enforced by the GitHub API.
+You may want to filter with &ldquo;is:open&rdquo; to avoid this.</p>
+<p><img src="/ghsearchprs.gif" alt="GHSearchPRs"></p>
 <h2 id="working-with-reviews">Working with Reviews</h2>
 <h3 id="starting-and-submitting-a-review">Starting and submitting a review</h3>
 <p>A review can be started with the &ldquo;GHStartReview&rdquo;. When this command completes
@@ -150,11 +202,23 @@ your pending review. If you want to cancel the review use &ldquo;GHDeleteReview&
 will drop any pending comments and remove the pending review state.</p>
 <p>Once you&rsquo;ve created all your comments you can use the &ldquo;GHSubmitReview&rdquo; command
 to submit it.</p>
-<p><img src="/ghreviews.gif" alt="GHOReviews"></p>
+<p><img src="/ghreviews.gif" alt="GHReviews"></p>
+<h3 id="listing-requested-reviews">Listing requested reviews</h3>
+<p>The &ldquo;GHRequestedReview&rdquo; command can be used to list pull requests your username
+has explicitly been requested to review.</p>
+<h3 id="listing-recently-reviewed-pull-requests">Listing recently reviewed pull requests</h3>
+<p>The &ldquo;GHRequestedReview&rdquo; command will only show pull requests you&rsquo;ve been requested
+to review, and once you&rsquo;ve submitted a review, it will no longer list the reviewed PR.</p>
+<p>To list pull requests you&rsquo;ve recently reviewed but are still open you may use the
+&ldquo;GHReviewed&rdquo; command.</p>
 <h3 id="browsing-by-review-comment">Browsing by review comment</h3>
 <p>Submitted reviews can be opened with (default) &lt;CR&gt; in a new &ldquo;Reviews&rdquo; panel.
 This panel aggregates review comments, further organizing threaded comments by
 reviews.</p>
+<h3 id="immediately-approving-a-review">Immediately approving a review</h3>
+<p>The &ldquo;GHApproveReview&rdquo; command can be used to start a review and immediately approve
+it. This is helpful if you do not plan on making any comments and would simply
+like to approve the review with an optional comment.</p>
 <h2 id="working-with-issues">Working with Issues</h2>
 <p>Issues can be previewed, opened, commented on, and browsed.</p>
 <p>The &ldquo;GHOpenIssue&rdquo; command works similarly to the &ldquo;GHOpenPR&rdquo; command. If no number
@@ -167,6 +231,38 @@ cursor.</p>
 <p>Issues are independent of a pull request being opened and are their own feature
 in <code>gh.nvim</code>.</p>
 <p><img src="/ghissues.gif" alt="GHOpenIssue"></p>
+<h3 id="searching-issues">Searching Issues</h3>
+<p>The &ldquo;GHSearchIsssues&rdquo; command can be used to search for issues on the GitHub platform.</p>
+<p>Once the command is issued a <code>vim.ui.input</code> prompt will appear.
+This prompt will take further query strings as outlined <a href="https://docs.github.com/en/search-github/searching-on-github/searching-issues-and-pull-requests">here</a>:</p>
+<p>If you do not specify any further query string an attempt to list all Issues on
+GitHub will take place, and you will hit a GitHub limit.</p>
+<p>You may want to filter with &ldquo;repo:{owner}/{name}&rdquo; and even further with &ldquo;repo:{owner}/{name} search_term in:title&rdquo;
+to ensure you do not over extend your search.</p>
+<p><img src="/ghsearchissues.gif" alt="GHSearchIssues"></p>
+<h2 id="notifications">Notifications</h2>
+<p>The &ldquo;GHNotifications&rdquo; command will open a buffer full of notifications for the
+current repository Neovim is opened to.</p>
+<p>Within this buffer multiple notifications are presented. Each one can be opened
+with (default) &lt;CR&gt;. Opening an issue will open an issue buffer while opening a
+pull request will close any existing pull request and open the specified one.</p>
+<p>You can preview the notification by pressing (default) &ldquo;d&rdquo; when the cursor is
+over one.</p>
+<p>You can mark a notification as read, which removes it from the notification buffer.
+You can also mark a notification as unsubscribed, which marks it as read and ignores
+any further events other then a mention of your username.</p>
+<p><img src="/ghnotifications.gif" alt="GHNotifications"></p>
+<h2 id="completion">Completion</h2>
+<p><code>gh.nvim</code> provides a completion function for auto-completing usernames and
+issues.</p>
+<p>The completion is automatically registered in thread and issue buffers and can
+optionally be registered in buffers with the &ldquo;./git&rdquo; string in their names. The
+latter being useful if you use <code>neovim</code> as your <code>git</code> editor.</p>
+<p>The completion function is registered to omnifunc with the default keybindings
+being &lt;C-x&gt;&lt;C-o&gt;.</p>
+<p><img src="/ghcompletion.gif" alt="GHCompletion"></p>
+
+
 
 </main>
 

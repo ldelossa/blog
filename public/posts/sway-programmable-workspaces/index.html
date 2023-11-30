@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fun with Sway&#39;s Programmable Workspaces | a.programming.blog</title>
+    <link rel="stylesheet" href="/css/style.css" />
+    <link rel="stylesheet" href="/css/fonts.css" />
+    
+  </head>
+
+  <body>
+    <nav>
+    <ul class="menu">
+      
+      <li><a href="/">Home</a></li>
+      
+      <li><a href="/posts/">Posts</a></li>
+      
+    </ul>
+    <hr/>
+    </nav>
+
+<div class="article-meta">
+<h1><span class="title">Fun with Sway&rsquo;s Programmable Workspaces</span></h1>
+
+<h2 class="date">2023/10/03</h2>
+</div>
+
+<main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#automatically-opening-a-terminal">Automatically opening a terminal</a>
+      <ul>
+        <li><a href="#creating-a-workspace-easily">Creating a workspace easily</a></li>
+        <li><a href="#using-cdpath-to-open-terminal">Using CDPATH to open terminal</a></li>
+      </ul>
+    </li>
+    <li><a href="#opening-terminals-in-an-existing-workspace">Opening terminals in an existing workspace</a>
+      <ul>
+        <li><a href="#a-shell-opening-script">A shell opening script</a></li>
+      </ul>
+    </li>
+    <li><a href="#plugging-this-into-sway-configuration">Plugging this into Sway Configuration</a></li>
+    <li><a href="#end-automation">End Automation</a></li>
+  </ul>
+</nav>
+</aside>
+<p>I&rsquo;m a big fan of the Sway compositor.</p>
+<p>I actually moved to Sway after I raged-quit Gnome for its crap multi-monitor
+support.</p>
+<p>In Sway you have &lsquo;workspaces&rsquo; which you can assign to particular monitors.
+This means when you unplug from the monitors and plug back in your workspace
+layouts are restored, something Gnome has not figured out how to do yet.</p>
+<p>You can also name these workspaces and this got my A.D.D, automation-obsessed
+brain thinking, what else can we do with these names?</p>
+<h2 id="automatically-opening-a-terminal">Automatically opening a terminal</h2>
+<p>Are you tired of this monotonous sequence of events:</p>
+<ol>
+<li>Create a workspace</li>
+<li>Open a terminal</li>
+<li><code>cd</code> to the directory you&rsquo;ll be working in</li>
+</ol>
+<p>Probably not, but I was.</p>
+<p>I thought it would be cool if creating a workspace also automatically opened
+a terminal window to the repository you were going to hack on.</p>
+<p>Maybe its possible to have to have the workspace&rsquo;s name drive opening a terminal
+to a specific working directory.</p>
+<p>The first issue tho, is long paths, right?</p>
+<p>It would pretty annoying to open a legacy <code>GOPATH</code> project residing at
+<code>~/git/gopath/src/github.com/ldelossa/blog</code> if the workspace&rsquo;s name needed to
+reflect the terminal&rsquo;s working directory.</p>
+<p>If we squint at this problem tho, POSIX shells have a solution to this built in,
+the <a href="https://pubs.opengroup.org/onlinepubs/9699919799/utilities/cd.html">CDPATH</a>
+environment variable.</p>
+<p>This allows us to define <code>CDPATH=~/git/gopath/src/github.com</code> and now if you
+were to just type &lsquo;cd ldelossa/blog&rsquo; the shell would try
+<code>cd ~/git/gopath/src/github.com/ldelossa/blog</code> and we&rsquo;d be happy.</p>
+<p>With <code>CDPATH</code> as an example we can come up with the following solution then</p>
+<ol>
+<li>Create a workspace named after the relative path of the directory</li>
+<li>Take the relative path and postfix it onto each value in <code>CDPATH</code></li>
+<li>If the fully qualified path exists, open a terminal to that directory.</li>
+</ol>
+<p>Sounds good to me, lets now break this down into what we need to script.</p>
+<h3 id="creating-a-workspace-easily">Creating a workspace easily</h3>
+<p>Okay, I&rsquo;m going to cheat a bit here, I already scripted a lot of Sway stuff
+into <a href="https://github.com/davatorium/rofi">Rofi</a> GUI menus.</p>
+<p>Rofi is just a general &lsquo;selector&rsquo; GUI that has some baked in functionality, but
+you can think of it as a &ldquo;pipe in a list, select an option, return that option&rdquo;
+kinda program.</p>
+<p>Check out my <a href="https://github.com/ldelossa/sway-rofi-scripts">Sway-Rofi-Scripts</a>
+repository, even if you hate Rofi you can just steal the bash scripts.</p>
+<p>Anyway, I already have a Rofi script which I can hit <code>alt+n</code> in my Sway
+configuration to create a new workspace.</p>
+<h3 id="using-cdpath-to-open-terminal">Using CDPATH to open terminal</h3>
+<p>Let&rsquo;s actually take a look at my Rofi script which creates a workspace and
+opens a terminal to the appropriate directory.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>TERM<span style="color:#f92672">=</span>kitty
+</span></span><span style="display:flex;"><span>theme_overrides<span style="color:#f92672">=</span><span style="color:#e6db74">&#34;listview { enabled: false;} num-rows { enabled: false;} num-filtered-rows { enabled: false;} case-indicator { enabled: false;} textbox-num-sep { enabled: false;}&#34;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>workspace<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>rofi -p <span style="color:#e6db74">&#34;New workspace&#34;</span> -dmenu -theme-str <span style="color:#e6db74">&#34;</span>$theme_overrides<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[[</span> -z $workspace <span style="color:#f92672">]]</span> <span style="color:#f92672">&amp;&amp;</span> exit
+</span></span><span style="display:flex;"><span>swaymsg workspace $workspace
+</span></span><span style="display:flex;"><span>IFS<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;:&#39;</span> read -ra cdpaths <span style="color:#f92672">&lt;&lt;&lt;</span> <span style="color:#e6db74">&#34;</span>$CDPATH<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> path in <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>cdpaths[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> -d <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        swaymsg exec <span style="color:#e6db74">&#34;</span>$TERM<span style="color:#e6db74"> --detach --working-directory \&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">\&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        exit
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span></code></pre></div><p>Alright, I know your eyes are bleeding, I hate looking at bash, but that
+is partly because I don&rsquo;t take the time to write &ldquo;pretty&rdquo; bash.</p>
+<p>Regardless, this script accomplishes what we set out to, lets walk thru it.</p>
+<p>The first couple lines don&rsquo;t matter too much, we set our terminal to kitty, which
+is my preferred terminal, and do some theming.</p>
+<p>Next, we use <code>rofi</code> to prompt for a workspace name and exit if we get an empty
+string.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>workspace<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>rofi -p <span style="color:#e6db74">&#34;New workspace&#34;</span> -dmenu -theme-str <span style="color:#e6db74">&#34;</span>$theme_overrides<span style="color:#e6db74">&#34;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">[[</span> -z $workspace <span style="color:#f92672">]]</span> <span style="color:#f92672">&amp;&amp;</span> exit
+</span></span></code></pre></div><p>Next, we create the workspace, easy enough</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>swaymsg workspace $workspace
+</span></span></code></pre></div><p>And finally we append each path in <code>CDPATH</code> to our workspace name, and if a
+directory is found, we open a terminal directly to that fully qualified
+path.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>IFS<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;:&#39;</span> read -ra cdpaths <span style="color:#f92672">&lt;&lt;&lt;</span> <span style="color:#e6db74">&#34;</span>$CDPATH<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> path in <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>cdpaths[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> -d <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        swaymsg exec <span style="color:#e6db74">&#34;</span>$TERM<span style="color:#e6db74"> --detach --working-directory \&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">\&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        exit
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span></code></pre></div><p>That little <code>IFS</code> bit is such a funny bashism.</p>
+<p>Its a global which tells the bash interpretor
+&ldquo;use this character as a delimiter&rdquo;, so the <code>read -ra</code> call creates an array
+by considering each value between the <code>:</code> characters in <code>CDPATH</code> as elements.</p>
+<p>It&rsquo;s probably a well known trick at this point, but the uninitiated are probably
+saying &ldquo;WTF is that?&rdquo; right now.</p>
+<h2 id="opening-terminals-in-an-existing-workspace">Opening terminals in an existing workspace</h2>
+<p>Of course I wasn&rsquo;t happy with just the above being sorted out.</p>
+<p>My next irk was when I needed to open another terminal I&rsquo;d have to again <code>cd</code>
+into the directory the workspace was focused on.</p>
+<p>There are ways around this but they require you to be inside an active terminal
+and &lsquo;spawn&rsquo; another one.</p>
+<p>This breaks down if you&rsquo;re focused inside a GUI application but want a quick
+terminal.</p>
+<p>I wanted a global Sway shortcut which looks at the workspace&rsquo;s name and tries
+to open a terminal in that directory first, before simply opening one at the
+terminal&rsquo;s default working directory.</p>
+<h3 id="a-shell-opening-script">A shell opening script</h3>
+<p>In <code>Sway</code> you can bind keyboard shortcuts to script execution.</p>
+<p>So, what we can do is build a script which performs the following task:</p>
+<ol>
+<li>Get the current Sway workspace</li>
+<li>Postfix it to every path prefix in <code>CDPATH</code></li>
+<li>Check if it&rsquo;s a directory, if so open terminal to this directory</li>
+<li>If not, open a terminal to the default working directory.</li>
+</ol>
+<p>Given the example just before, this should be a piece of toast.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span><span style="color:#75715e">#!/bin/bash
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>workspace<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>swaymsg -t get_workspaces -r | jq -r -c <span style="color:#e6db74">&#39;.[] | select(.focused == true) | .name&#39;</span><span style="color:#66d9ef">)</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>IFS<span style="color:#f92672">=</span><span style="color:#e6db74">&#39;:&#39;</span> read -ra cdpaths <span style="color:#f92672">&lt;&lt;&lt;</span> <span style="color:#e6db74">&#34;</span>$CDPATH<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">for</span> path in <span style="color:#e6db74">&#34;</span><span style="color:#e6db74">${</span>cdpaths[@]<span style="color:#e6db74">}</span><span style="color:#e6db74">&#34;</span>; <span style="color:#66d9ef">do</span>
+</span></span><span style="display:flex;"><span>    echo <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> <span style="color:#f92672">[[</span> -d <span style="color:#e6db74">&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">&#34;</span> <span style="color:#f92672">]]</span>; <span style="color:#66d9ef">then</span>
+</span></span><span style="display:flex;"><span>        swaymsg exec <span style="color:#e6db74">&#34;</span>$TERM<span style="color:#e6db74"> --detach --working-directory \&#34;</span>$path<span style="color:#e6db74">/</span>$workspace<span style="color:#e6db74">\&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>        exit
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fi</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">done</span>
+</span></span><span style="display:flex;"><span>swaymsg exec <span style="color:#e6db74">&#34;</span>$TERM<span style="color:#e6db74"> --detach&#34;</span>
+</span></span></code></pre></div><p>The above is real fun, because we get to use <code>jq</code> to extract the currently
+focused workspace.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-bash" data-lang="bash"><span style="display:flex;"><span>workspace<span style="color:#f92672">=</span><span style="color:#66d9ef">$(</span>swaymsg -t get_workspaces -r | jq -r -c <span style="color:#e6db74">&#39;.[] | select(.focused == true) | .name&#39;</span><span style="color:#66d9ef">)</span>
+</span></span></code></pre></div><p>This lists all the workspaces using <code>swaymsg</code> then iterates over them using <code>jq</code>,
+selects the workspace that has its <code>focused</code> field set to true, and then returns
+its name.</p>
+<p>We then just do the same <code>CDPATH</code> searching we did in the earlier example.</p>
+<h2 id="plugging-this-into-sway-configuration">Plugging this into Sway Configuration</h2>
+<p>We need to make these scripts run in Sway, we have a few concerns here.</p>
+<p>First, we need to get $CDPATH into our Sway config.</p>
+<p>Usually, <code>CDPATH</code> would be set in a <code>.bashrc</code> or a <code>.zshrc</code>, however Sway has
+no idea about your shell&rsquo;s environment.</p>
+<p>There are some fancy ways to plumb environment variables into Sway&rsquo;s environment,
+however these usually involve launching Sway via systemd, and IIUC this is not
+the &ldquo;common&rdquo; setup.
+At least, I opted not to do this.</p>
+<p>So, I simply just added it at the top of my sway.conf</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-txt" data-lang="txt"><span style="display:flex;"><span>set $cdpaths &#39;/home/louis/git/gopath/src/&#39;
+</span></span></code></pre></div><p>Now, we can call our scripts with this variable</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-txt" data-lang="txt"><span style="display:flex;"><span>bindsym $mod+Return exec &#39;CDPATH=$cdpaths TERM=$term ~/.config/sway/shell_open.sh&#39;
+</span></span></code></pre></div><p>In this configuration line I bind &lsquo;alt+return&rsquo; to our script above and plumb
+our environment variables into the script&rsquo;s call.</p>
+<p>The same is done for our workspace creation script, but in my config, I just
+call my rofi script:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-txt" data-lang="txt"><span style="display:flex;"><span>bindsym $mod+n exec &#39;CDPATH=$cdpaths ~/git/sway/sway-rofi-scripts/sway-new-workspace.sh&#39;
+</span></span></code></pre></div><h2 id="end-automation">End Automation</h2>
+<p>I wanted to write this post was to show how powerful exporting state from
+the compositor can be for scripting.</p>
+<p>This post should help get your gears turning.
+With the ability to introspect details of your compositor&rsquo;s running state
+you can really take automation as far as your imagination warrants you.</p>
+<p>If you want to see any of the concepts we talked about in further details you
+can check out my <a href="%22https://github.com/ldelossa/dotfiles/tree/master/config/sway%22">sway dotfiles</a>.</p>
+
+
+
+</main>
+
+  <footer>
+  
+  
+  </footer>
+  </body>
+</html>
+

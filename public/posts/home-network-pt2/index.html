@@ -28,6 +28,20 @@
 </div>
 
 <main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#application-routing">Application Routing</a></li>
+    <li><a href="#traefik">Traefik</a>
+      <ul>
+        <li><a href="#configuration">Configuration</a></li>
+      </ul>
+    </li>
+    <li><a href="#deployment">Deployment</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+</aside>
 <p>In <a href="/blog/home-network-pt1">Part 1</a> of this series I explain the desire to create a minimal home network running on containers, the stack being used to accomplish this, and how name resolution will work.</p>
 <p>This post will cover how services running as containers are routed.</p>
 <h2 id="application-routing">Application Routing</h2>
@@ -140,6 +154,8 @@ The configuration files are also mapped from the host allowing for easy maintena
 <li>Containers can be accessed by a hostname.</li>
 <li>Hostnames can be redirected to containers exposed directly on &ldquo;ct-host&rdquo;.</li>
 </ul>
+
+
 
 </main>
 

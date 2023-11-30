@@ -28,6 +28,35 @@
 </div>
 
 <main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#introduction">Introduction</a></li>
+    <li><a href="#part-1-conceptual-overview">Part 1: Conceptual Overview</a>
+      <ul>
+        <li><a href="#authentication-and-encryption">Authentication and Encryption</a></li>
+        <li><a href="#cryptographic-signing">Cryptographic Signing</a></li>
+        <li><a href="#cryptographic-encryption">Cryptographic Encryption</a></li>
+      </ul>
+    </li>
+    <li><a href="#part-2-applied-technologies">Part 2: Applied Technologies</a>
+      <ul>
+        <li><a href="#private-key-infrastructure-and-x509-certificates">Private Key Infrastructure And x509 Certificates</a></li>
+        <li><a href="#tls">TLS</a></li>
+        <li><a href="#json-web-tokens-and-json-web-encryption">JSON Web Tokens and JSON Web Encryption</a></li>
+      </ul>
+    </li>
+    <li><a href="#part-2-encodings">Part 2: Encodings</a>
+      <ul>
+        <li><a href="#it-all-starts-with-asn1">It All Starts With ASN.1</a></li>
+        <li><a href="#rsa-keys-and-certificates">RSA Keys And Certificates</a></li>
+      </ul>
+    </li>
+    <li><a href="#part-3-an-example">Part 3: An example</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+</aside>
 <h2 id="introduction">Introduction</h2>
 <p>It&rsquo;s common to hear engineers muttering &ldquo;cryptography is scary&rdquo; or &ldquo;oh no its a cert problem.&rdquo;</p>
 <p>The topic is a dense one full of maths, mailing lists, and vulnerabilities which quite literally shock the world.
@@ -292,6 +321,8 @@ This often leads to engineers avoiding the subject all together.</p>
 <p>This post makes it apparent that working with cryptography in a pragmatic sense has parallels with json or protobuf.
 At the end of the day, we describe a machine agnostic definition of an object (ASN.1), specify a way to encode this description (DER), and optionally modify the binary encoding to be network and email friendly (PEM).</p>
 <p>With this new perspective tasks dealing with certificates, ssl, authentication, and encryption should be demystified enough to tackle.</p>
+
+
 
 </main>
 

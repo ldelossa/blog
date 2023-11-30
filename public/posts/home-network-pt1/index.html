@@ -28,6 +28,22 @@
 </div>
 
 <main>
+<aside>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#the-stack">The Stack</a></li>
+    <li><a href="#the-network">The Network</a></li>
+    <li><a href="#name-resolution">Name Resolution</a>
+      <ul>
+        <li><a href="#podman">Podman</a></li>
+        <li><a href="#coredns-container">CoreDNS Container</a></li>
+        <li><a href="#configuring-devices">Configuring Devices</a></li>
+      </ul>
+    </li>
+    <li><a href="#conclusion">Conclusion</a></li>
+  </ul>
+</nav>
+</aside>
 <p><em>Checkout <a href="/blog/posts/home-network-pt2.post">Part 2</a> For Application Routing</em></p>
 <p>It&rsquo;s common to set up a network, a few virtual hosts, and fundamental network services at home as a way to learn how these technologies interact.</p>
 <p>While moving apartments in Brooklyn I discovered a Thinkpad laptop just collecting dust.
@@ -78,8 +94,8 @@ The CONTAINER-LAN is virtual and created by the linux kernel.</p>
 Not every container needs to have their ports forwarded but to achieve name resolution this is required.</p>
 <h2 id="name-resolution">Name Resolution</h2>
 <p>Name resolution provides mapping from a hostname to a service.
-This is encountered every time &ldquo;<a href="http://www.google.com">www.google.com</a>&rdquo; is typed into a browser.
-The name &ldquo;<a href="http://www.google.com">www.google.com</a>&rdquo; is resolved to an IP address where web servers provide this service.
+This is encountered every time &ldquo;<a href="https://www.google.com">www.google.com</a>&rdquo; is typed into a browser.
+The name &ldquo;<a href="https://www.google.com">www.google.com</a>&rdquo; is resolved to an IP address where web servers provide this service.
 This lab creates the <code>ldelossa.net</code> local domain.</p>
 <p>Personally, I don&rsquo;t want to write RFC 1035 zone files, host ancient bind servers, or deal with cryptic configs.
 There is a certain beauty in the syntax of a hosts file.
@@ -140,6 +156,8 @@ However, devices can &ldquo;opt-in&rdquo; by setting their DNS server to <code>1
 By utilizing Podman and CoreDNS a solution for name resolution was devised.
 Mapping configuration files from the host into containers provides a fast and dynamic way to update DNS in the lab.</p>
 <p>In <a href="/blog/posts/home-network-pt2.post">Part 2</a> a mechanism for routing hostnames to specific containerized services is introduced.</p>
+
+
 
 </main>
 

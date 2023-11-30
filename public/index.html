@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-us">
   <head>
-	<meta name="generator" content="Hugo 0.93.3" />
+	<meta name="generator" content="Hugo 0.108.0">
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title> | a.programming.blog</title>
@@ -30,8 +30,12 @@
 <div class="gh-badge">
   <a href="https://github.com/ldelossa"><img src="https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/ldelossa"></a>
 </div>
+<div class="mastodon-badge">
+  <a rel="me" href="https://fosstodon.org/@ldelossa"></a>
+</div>
 
-<a rel="me" href="https://fosstodon.org/@ldelossa">Mastodon</a>
+
+
 
 <h1 id="about-me">About Me</h1>
 <p>My name is Louis DeLosSantos and I&rsquo;m currently a software engineer at Isovalent focusing on Cilium,
@@ -52,17 +56,30 @@ Below are some of my open source projects.</p>
 <li><a href="https://youtu.be/AhdPC_d0Lso">Container Security with Clair</a></li>
 <li><a href="https://youtu.be/pEAU6E1rZWo">Inside the Indexer</a></li>
 </ul>
+<h2 id="nvim-idehttpsgithubcom"><a href="https://github.com/">nvim-ide</a></h2>
+<p>A full featured IDE layer for Neovim.</p>
+<p>Heavily inspired by VSCode.</p>
+<h2 id="ghnvimhttpsgithubcomldelossaghnvim"><a href="https://github.com/ldelossa/gh.nvim">gh.nvim</a></h2>
+<p>A fully featured GitHub integration for Neovim utilizing the <code>litee.nvim</code> framework.</p>
 <h2 id="liteenvimhttpsgithubcomldelossaliteenvim"><a href="https://github.com/ldelossa/litee.nvim">litee.nvim</a></h2>
 <p>Litee.nvim is a framework, written in Lua, for building plugins.</p>
 <p>There are several plugins reachable from the above link&rsquo;s readme.</p>
 <p>Most plugins deal with porting over feature present in VSCode that Neovim lacks.</p>
-<h2 id="sway-fzfifyhttpsgithubcomldelossasway-fzfify"><a href="https://github.com/ldelossa/sway-fzfify">sway-fzfify</a></h2>
-<p>A set of scripts I use daily in coordination with the Sway window manager.</p>
-<p>Uses FZF to accomplish most Sway navigation needs such as creating and moving
-workspaces, selecting marks, launching Linux desktop apps, etc.</p>
-<h2 id="vimdarkhttpsgithubcomldelossavimdark"><a href="https://github.com/ldelossa/vimdark">vimdark</a></h2>
-<p>A minimal vim theme based on Chrome&rsquo;s dark reader.</p>
-<p>Offers a light theme similar to PaperColor as well.</p>
+<h1 id="kernel-contributions">Kernel Contributions</h1>
+<ul>
+<li><a href="https://lore.kernel.org/bpf/20230505-bpf-add-tbid-fib-lookup-v2-0-0a31c22c748c@gmail.com/">bpf: utilize table ID in bpf_fib_lookup helper</a></li>
+</ul>
+<p>This change allows a routing table ID to be used in the eBPF fib lookup helper.
+When a fib lookup occurs we can now say which table we should perform the lookup
+from.
+This essentially pushes policy routing, akin to the <code>ip rule</code> functionality, into
+the <code>tc</code> layer of the Kernel.</p>
+<h1 id="talks">Talks</h1>
+<h2 id="simplifying-and-making-the-network-programmable-with-kubernetes-and-srv6-kubeconhttpswwwyoutubecomwatchvncyg-wscul8t1s"><a href="https://www.youtube.com/watch?v=ncYG-wScuL8&amp;t=1s">Simplifying and Making the Network Programmable with Kubernetes and SRv6 (Kubecon)</a></h2>
+<p>I co-presented this talk at Kubecon NA 2022.</p>
+<p>An overview of my work with Cilium and SRv6 L3VPN.</p>
+<h2 id="inside-the-indexer-redhat-commonshttpswwwyoutubecomwatchvpeau6e1rzwot3s"><a href="https://www.youtube.com/watch?v=pEAU6E1rZWo&amp;t=3s">Inside the Indexer (RedHat Commons)</a></h2>
+<p>An overview of Clair&rsquo;s Indexer architecture.</p>
 
 
 
