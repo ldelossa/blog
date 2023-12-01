@@ -17,6 +17,16 @@ body {
     display: inline-block; 
     margin-right: 10px;
 }
+
+.menu-icons {
+	text-align: center;
+}
+.menu-icons img {
+    padding: 5px;
+    background: #FFFDFA;
+	width: 4%;
+	margin: 10px;
+}
 .article-meta, .menu a {
   text-decoration: none;
   background: #87AFD7;
