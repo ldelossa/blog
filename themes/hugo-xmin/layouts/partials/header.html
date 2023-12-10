@@ -10,11 +10,16 @@
   </head>
 
   <body>
-    <nav>
-    <ul class="menu">
+    <nav class="menu">
+    <ul>
       {{ range .Site.Menus.main }}
       <li><a href="{{ .URL | relURL }}">{{ .Name }}</a></li>
       {{ end }}
+	  <a href="https://who.ldelossa.is/posts/index.xml">
+       <img src="/rss.png" alt="RSS Feed">                      
+      </a>   
     </ul>
     <hr/>
     </nav>
+  </body>
+</html>	

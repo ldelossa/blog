@@ -1,7 +1,7 @@
 languageCode: "en-us"
 title: "a.programming.blog"
 theme: "hugo-xmin"
-
+baseURL: "https://who.ldelossa.is"
 menu:
   main:
     - name: Home
@@ -9,3 +9,13 @@ menu:
       weight: 1
     - name: Posts
       url: "posts/"
+services:
+  rss:
+    limit: -1
+author:
+  email: louis.delos@gmail.com
+  name: Louis DeLosSantos
+outputs:
+  posts:
+  - html
+  - rss

@@ -18,6 +18,10 @@ body {
     margin-right: 10px;
 }
 
+.menu img {
+	width: 2%
+}
+
 .menu-icons {
 	text-align: center;
 }
