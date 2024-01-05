@@ -425,7 +425,7 @@ int skb_do_redirect(struct sk_buff *skb)
 
 Taking a look at the interesting bits we see that we retrieve the `bpf_redirect_info` structure that we stashed our flags into during `bpf_redirect` and in our case we invoke the `__bpf_redirect` function. 
 
-I'll leave it to the reader to continue tracing this path our in the code.
+I'll leave it to the reader to continue tracing this path out in the code.
 It will eventually lead the packet being queued on another network device. 
 
 The key take away from the above is that `bpf_redirect` occurs outside of the eBPF program and the TC subsystem is designed to redirect the packet, not the actual eBPF program.
