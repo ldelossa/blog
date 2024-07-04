@@ -309,7 +309,7 @@ As eluded to above, we want our test runner to do the following:
 `fib_lookup_bpf` structure defined in `bpf_lookup.skel.h`
 * Inject a mock `bpf_fib_lookup` parameter structure into the test before 
 its ran
-* utilize `libpf`'s `bpf_test_run_opts` function to run our test in userspace
+* utilize `libbpf`'s `bpf_test_run_opts` function to run our test in userspace
 * read the resulting `fib_lookup_bpf` and `fib_lookup_ret` to determine if the
 default gateway was used.
 
