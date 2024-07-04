@@ -164,7 +164,7 @@ field.</p><p>This allows a userspace program to load the eBPF program, retrieve 
 to it, and then both &ldquo;inject&rdquo; and &ldquo;read&rdquo; values from globals before and after
 <code>bpf_test_run_opts</code> is called.</p><p>This is exactly what our test runner is going to do.</p><h2 id=writing-the-test-runner>Writing the test runner</h2><p>As eluded to above, we want our test runner to do the following:</p><ul><li>Load our eBPF test program into the Kernel, getting a handle to the
 <code>fib_lookup_bpf</code> structure defined in <code>bpf_lookup.skel.h</code></li><li>Inject a mock <code>bpf_fib_lookup</code> parameter structure into the test before
-its ran</li><li>utilize <code>libpf</code>&rsquo;s <code>bpf_test_run_opts</code> function to run our test in userspace</li><li>read the resulting <code>fib_lookup_bpf</code> and <code>fib_lookup_ret</code> to determine if the
+its ran</li><li>utilize <code>libbpf</code>&rsquo;s <code>bpf_test_run_opts</code> function to run our test in userspace</li><li>read the resulting <code>fib_lookup_bpf</code> and <code>fib_lookup_ret</code> to determine if the
 default gateway was used.</li></ul><p>We have control of the network namespace the test runs in, so we can hard-code
 the interface ID (ifindex) which represents the default gateway, making our
 test runner a bit simpler.</p><p>Let&rsquo;s take a look at the test runner:</p><p><code>test.c</code></p><div class=highlight><pre tabindex=0 style=color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4><code class=language-c data-lang=c><span style=display:flex><span><span style=color:#75715e>#include</span> <span style=color:#75715e>&lt;bpf/bpf.h&gt;</span><span style=color:#75715e>
