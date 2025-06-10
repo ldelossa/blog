@@ -90,7 +90,7 @@ Private key infrastructure, or PKI for short, is a grouping of technologies, pro
 This grouping can be used in tandem to ensure both authentication and encryption and securely transfer keys between parties.
 
 PKI is based on a private/public key model.
-In this model a private key is used for signing or encryption while the public key is used for verification or decryption.
+In this model a public key is used for signing or encryption while the private key is used for verification or decryption.
 
 *aside: Often the terms "asymmetric" and "symmetric" encryption come up. When the same key is used to encrypt and decrypt a message, this is known as "symmetric" encryption. When a key is used to encrypt a message as a different key is used to decrypt the message, this is known as "asymmetric" encryption. Public/Private key encryption is considered "asymmetric".
 
